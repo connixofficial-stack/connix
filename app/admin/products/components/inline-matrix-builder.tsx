@@ -510,6 +510,16 @@ export function InlineMatrixBuilder({
   const [variantToDelete, setVariantToDelete] = useState<VariantRow | null>(null);
   const previousBaseSkuRef = useRef(baseSku.trim());
 
+  const onChangeRef = useRef(onChange);
+  const selectionsRef = useRef(selections);
+  const variantsRef = useRef(variants);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+    selectionsRef.current = selections;
+    variantsRef.current = variants;
+  });
+
   const removeVariantAPI = useMutation(api.productsSmart.removeVariantWithCascade);
 
   const catalogById = useMemo(() => {
@@ -553,18 +563,22 @@ export function InlineMatrixBuilder({
       previousBaseSkuRef.current = nextBaseSku;
       return;
     }
-    setVariants((currentVariants) => {
-      const nextVariants = currentVariants.map((variant) => {
-        if (!variant.sku.startsWith(`${previousBaseSku}-`)) {
-          return variant;
-        }
-        return { ...variant, sku: `${nextBaseSku}-${variant.sku.slice(previousBaseSku.length + 1)}` };
-      });
-      if (JSON.stringify(nextVariants) !== JSON.stringify(currentVariants)) {
-        onChange(selections, nextVariants);
+    
+    let hasChanged = false;
+    const nextVariants = variantsRef.current.map((variant) => {
+      if (!variant.sku.startsWith(`${previousBaseSku}-`)) {
+        return variant;
       }
-      return nextVariants;
+      hasChanged = true;
+      return { ...variant, sku: `${nextBaseSku}-${variant.sku.slice(previousBaseSku.length + 1)}` };
     });
+
+    if (hasChanged) {
+      setVariants(nextVariants);
+      setTimeout(() => {
+        onChangeRef.current(selectionsRef.current, nextVariants);
+      }, 0);
+    }
     previousBaseSkuRef.current = nextBaseSku;
   }, [baseSku]);
 
@@ -577,7 +591,9 @@ export function InlineMatrixBuilder({
     if (selections.length === 0 || selections.some((selection) => selection.valueIds.length === 0)) {
       if (variants.length > 0) {
         setVariants([]);
-        onChange(selections, []);
+        setTimeout(() => {
+          onChangeRef.current(selectionsRef.current, []);
+        }, 0);
       }
       return;
     }
@@ -609,7 +625,9 @@ export function InlineMatrixBuilder({
 
     if (JSON.stringify(nextVariants) !== JSON.stringify(variants)) {
       setVariants(nextVariants);
-      onChange(selections, nextVariants);
+      setTimeout(() => {
+        onChangeRef.current(selections, nextVariants);
+      }, 0);
     }
   }, [selections, basePrice, optionCatalog, baseSku, valueLabelById]);
 

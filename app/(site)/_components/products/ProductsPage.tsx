@@ -1221,7 +1221,7 @@ function ProductsContent(props: ProductsPageProps) {
             count={products.length}
             totalCount={totalCount}
             unit="sản phẩm"
-            titleColor={tokens.headingColor}
+            titleColor={tokens.primary}
             subtitleColor={tokens.metaText}
             description={showCategorySubtitle && activeCategoryDoc?.description ? activeCategoryDoc.description : undefined}
             descriptionColor={tokens.bodyText}

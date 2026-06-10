@@ -8,6 +8,13 @@ const injectFrameDark = (children: React.ReactNode, isDark?: boolean): React.Rea
       return child;
     }
 
+    if (child.type === React.Fragment) {
+      const childProps = child.props as { children?: React.ReactNode };
+      return React.cloneElement(child, {
+        children: injectFrameDark(childProps?.children, isDark),
+      } as any);
+    }
+
     if (typeof child.type !== 'string') {
       return React.cloneElement(child, { isDark } as any);
     }

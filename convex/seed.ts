@@ -1917,7 +1917,7 @@ export const seedSettingsModule = mutation({
         { description: "Meta title, description, keywords", enabled: true, featureKey: "enableSEO", moduleKey: "settings", name: "SEO cơ bản" },
         { description: "Links Facebook, Instagram, Youtube...", enabled: true, featureKey: "enableSocial", moduleKey: "settings", name: "Mạng xã hội" },
         { description: "Bật/tắt nhóm Trang tin cậy", enabled: true, featureKey: "enableTrustPages", moduleKey: "settings", name: "Trang tin cậy" },
-        { description: "Sinh tự động Trust Pages từ dữ liệu thực", enabled: false, featureKey: "enableTrustPagesAutoGenerate", moduleKey: "settings", name: "Tự sinh Trust Pages" },
+        { description: "Sinh tự động Trust Pages từ dữ liệu thực", enabled: true, featureKey: "enableTrustPagesAutoGenerate", moduleKey: "settings", name: "Tự sinh Trust Pages" },
       ];
       for (const feature of features) {
         await ctx.db.insert("moduleFeatures", feature);

@@ -20,7 +20,7 @@ export const settingsModule = defineModuleWithRuntime({
      { key: 'enableProductSupplementalAdvanced', label: 'Nội dung mô tả SP', description: 'Bật tab Nội dung mô tả SP trong Admin > Cài đặt nâng cao', icon: Type, enabled: true },
      { key: 'enableShopConfigAdvanced', label: 'Cấu hình cửa hàng', description: 'Bật tab Cấu hình cửa hàng trong Admin > Cài đặt nâng cao', icon: Settings, enabled: true },
      { key: 'enableTrustPages', label: 'Trang tin cậy', icon: Globe },
-     { key: 'enableTrustPagesAutoGenerate', label: 'Tự sinh Trust Pages', icon: Sparkles },
+     { key: 'enableTrustPagesAutoGenerate', label: 'Tự sinh Trust Pages', icon: Sparkles, enabled: true },
    ],
  
   settings: [

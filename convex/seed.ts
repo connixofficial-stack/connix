@@ -1934,7 +1934,7 @@ export const seedSettingsModule = mutation({
         { enabled: true, fieldKey: "site_url", group: "site", isSystem: true, moduleKey: "settings", name: "URL Website", order: 2, required: false, type: "text" as const },
         { enabled: true, fieldKey: "site_logo", group: "site", isSystem: true, moduleKey: "settings", name: "Logo", order: 3, required: false, type: "image" as const },
         { enabled: true, fieldKey: "site_favicon", group: "site", isSystem: true, moduleKey: "settings", name: "Favicon", order: 4, required: false, type: "image" as const },
-        { enabled: true, fieldKey: "site_timezone", group: "site", isSystem: false, moduleKey: "settings", name: "Múi giờ", order: 5, required: false, type: "select" as const },
+        { enabled: false, fieldKey: "site_timezone", group: "site", isSystem: false, moduleKey: "settings", name: "Múi giờ", order: 5, required: false, type: "select" as const },
         { enabled: true, fieldKey: "site_language", group: "site", isSystem: false, moduleKey: "settings", name: "Ngôn ngữ", order: 6, required: false, type: "select" as const },
         { enabled: true, fieldKey: "site_brand_primary", group: "site", isSystem: false, moduleKey: "settings", name: "Màu thương hiệu (chính)", order: 7, required: false, type: "color" as const },
         { enabled: true, fieldKey: "site_brand_secondary", group: "site", isSystem: false, moduleKey: "settings", name: "Màu thương hiệu (phụ)", order: 8, required: false, type: "color" as const },

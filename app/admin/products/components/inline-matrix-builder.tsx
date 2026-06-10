@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Plus, Trash2, Wand2 } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Crop, Loader2, Plus, Trash2, Upload, Wand2 } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -23,6 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui";
+import { ImageEditorDialog } from "../../components/ImageEditorDialog";
+import { cn } from "../../components/ui";
 
 export type OptionCatalogItem = {
   id: Id<"productOptions">;
@@ -46,6 +48,8 @@ export type VariantRow = {
   price: number;
   salePrice?: number;
   stock: number;
+  image?: string;
+  images?: string[];
   optionValues: Array<{
     optionId: Id<"productOptions">;
     valueId: Id<"productOptionValues">;
@@ -60,6 +64,8 @@ interface InlineMatrixBuilderProps {
   initialVariants?: VariantRow[];
   onChange: (selections: VariantOptionSelection[], variants: VariantRow[]) => void;
   showPricing?: boolean;
+  showVariantImages?: boolean;
+  galleryImages?: string[];
 }
 
 const buildVariantKey = (optionValues: VariantRow["optionValues"]) =>
@@ -113,6 +119,381 @@ const normalizeSkuPart = (value: string) => value
     .slice(0, 3)
   : "";
 
+function VariantImageCell({
+  value,
+  onChange,
+  galleryImages: _galleryImages = [],
+  variantName = "",
+}: {
+  value?: string;
+  onChange: (url: string | undefined) => void;
+  galleryImages?: string[];
+  variantName?: string;
+}) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const saveImage = useMutation(api.storage.saveImage);
+
+  useEffect(() => {
+    if (value && !value.includes('convex.cloud')) {
+      setUrlInput(value);
+    } else {
+      setUrlInput('');
+    }
+  }, [value]);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsDragActive(true);
+    } else if (e.type === "dragleave") {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      void handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ảnh không được vượt quá 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const { storageId } = await response.json();
+      const result = await saveImage({
+        filename: file.name,
+        folder: "products",
+        mimeType: file.type,
+        size: file.size,
+        storageId,
+      });
+
+      onChange(result.url ?? undefined);
+      toast.success("Tải ảnh lên thành công");
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể tải ảnh lên");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      void handleFileUpload(file);
+    }
+  };
+
+  const handleClipboardPaste = async () => {
+    if (isUploading) return;
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(t => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const ext = imageType.split('/')[1] || 'png';
+          const file = new File([blob], `clipboard-${Date.now()}.${ext}`, { type: imageType });
+          void handleFileUpload(file);
+          return;
+        }
+      }
+      toast.error('Clipboard không có ảnh. Hãy copy ảnh trước.');
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        toast.error('Trình duyệt chặn quyền đọc clipboard.');
+      } else {
+        toast.error('Không đọc được clipboard. Hãy copy ảnh trước.');
+      }
+    }
+  };
+
+  const handleUrlSubmit = () => {
+    if (!urlInput.trim()) return;
+    try {
+      new URL(urlInput);
+    } catch {
+      if (!urlInput.startsWith('/')) {
+        toast.error('URL không hợp lệ');
+        return;
+      }
+    }
+    onChange(urlInput);
+    toast.success('Đã cập nhật URL ảnh');
+    setIsDialogOpen(false);
+  };
+
+  const handleRemove = () => {
+    onChange(undefined);
+    setUrlInput('');
+    setIsDialogOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <div onClick={() => setIsDialogOpen(true)} className="cursor-pointer">
+        {value ? (
+          <div className="relative h-10 w-10 rounded-md border border-slate-200 dark:border-slate-700 hover:opacity-85 transition-opacity">
+            <img src={value} alt="Variant" className="h-full w-full object-cover rounded-md" />
+            {isUploading && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 flex items-center justify-center rounded-md">
+                <Loader2 size={16} className="animate-spin text-blue-500" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={isUploading}
+            className="h-10 w-10 rounded-md border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+            ) : (
+              <Plus className="h-4 w-4 text-slate-400" />
+            )}
+          </button>
+        )}
+      </div>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md border-slate-100 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold text-slate-900 dark:text-slate-50">
+              Ảnh phiên bản {variantName ? `(${variantName})` : ''}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Quản lý hình ảnh đại diện cho phiên bản sản phẩm này.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {value ? (
+              <div className="space-y-4">
+                {/* Ảnh hiện tại */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ảnh hiện tại của phiên bản</Label>
+                  <div className="relative group w-44 h-44 mx-auto rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 overflow-hidden flex items-center justify-center shadow-sm">
+                    <img src={value} alt="Current Variant" className="max-h-full max-w-full object-contain" />
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dropzone dạng dẹt (compact) để kéo thả thay thế ảnh */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Thay đổi ảnh</Label>
+                  <div
+                    onDragEnter={handleDrag}
+                    onDragOver={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn(
+                      "border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all flex items-center justify-center gap-3 bg-slate-50/50 hover:bg-slate-100/40 dark:bg-slate-900/10 dark:hover:bg-slate-800/10",
+                      isDragActive 
+                        ? "border-orange-500 bg-orange-50/30 dark:bg-orange-950/15" 
+                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    )}
+                  >
+                    <Upload size={16} className={`text-slate-500 dark:text-slate-400 ${isUploading ? 'animate-spin' : ''}`} />
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                      Kéo thả ảnh hoặc <span className="text-orange-500 hover:underline font-semibold">chọn tệp mới</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Dropzone lớn khi chưa có ảnh */
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tải ảnh đại diện</Label>
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3",
+                    isDragActive 
+                      ? "border-orange-500 bg-orange-50/30 dark:bg-orange-950/15" 
+                      : "border-slate-200 dark:border-slate-800 bg-slate-50/50 hover:bg-slate-100/40 dark:hover:bg-slate-800/10 hover:border-slate-300 dark:hover:border-slate-700"
+                  )}
+                >
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-full shadow-sm border border-slate-100 dark:border-slate-800/80">
+                    <Upload size={22} className={`text-slate-500 dark:text-slate-400 ${isUploading ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                      Kéo thả ảnh vào đây hoặc <span className="text-orange-500 hover:underline font-semibold">chọn từ thiết bị</span>
+                    </p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                      Hỗ trợ định dạng JPG, PNG, WEBP (tối đa 5MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Clipboard & URL ảnh */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 border-t border-slate-100 dark:border-slate-800/60 pt-3">
+                <span className="text-slate-450 dark:text-slate-500">Dán nhanh ảnh từ clipboard:</span>
+                <button
+                  type="button"
+                  onClick={handleClipboardPaste}
+                  disabled={isUploading}
+                  className="flex items-center gap-1 font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
+                >
+                  <ClipboardPaste size={12} />
+                  Dán từ Clipboard
+                </button>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Hoặc sử dụng URL ảnh trực tiếp</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="h-9 text-xs flex-1 border-slate-200 dark:border-slate-800 focus-visible:ring-orange-500 focus-visible:border-orange-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleUrlSubmit();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleUrlSubmit}
+                    disabled={!urlInput.trim()}
+                    className="h-9 text-xs px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                  >
+                    Gán URL
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+            {value ? (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  onClick={handleRemove}
+                  disabled={isUploading}
+                >
+                  <Trash2 size={13} className="mr-1.5" />
+                  Xóa ảnh
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                      setTimeout(() => setIsEditorOpen(true), 150);
+                    }}
+                    disabled={isUploading}
+                  >
+                    <Crop size={13} className="mr-1.5" />
+                    Cắt / Sửa
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 text-xs"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Đóng
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-end w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 text-xs"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Hủy bỏ
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {isEditorOpen && value && (
+        <ImageEditorDialog
+          imageUrl={value}
+          onClose={() => setIsEditorOpen(false)}
+          onApply={(editedFile) => {
+            setIsEditorOpen(false);
+            void handleFileUpload(editedFile);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export function InlineMatrixBuilder({
   baseSku,
   basePrice,
@@ -121,6 +502,8 @@ export function InlineMatrixBuilder({
   initialVariants = [],
   onChange,
   showPricing = true,
+  showVariantImages = false,
+  galleryImages = [],
 }: InlineMatrixBuilderProps) {
   const [selections, setSelections] = useState<VariantOptionSelection[]>(initialSelections);
   const [variants, setVariants] = useState<VariantRow[]>(initialVariants);
@@ -293,6 +676,13 @@ export function InlineMatrixBuilder({
     onChange(selections, nextVariants);
   };
 
+  const updateVariantImage = (index: number, url: string | undefined) => {
+    const nextVariants = [...variants];
+    nextVariants[index] = { ...nextVariants[index], image: url };
+    setVariants(nextVariants);
+    onChange(selections, nextVariants);
+  };
+
   const handleDeleteVariantClick = (variant: VariantRow) => {
     if (!variant.id) {
       const nextVariants = variants.filter((item) => item !== variant);
@@ -409,6 +799,7 @@ export function InlineMatrixBuilder({
               <TableHeader className="bg-slate-50 dark:bg-slate-800">
                 <TableRow>
                   <TableHead className="w-[220px]">Phân loại</TableHead>
+                  {showVariantImages && <TableHead className="w-[80px]">Ảnh</TableHead>}
                   <TableHead>
                     <div className="flex items-center gap-2">
                       SKU
@@ -431,6 +822,16 @@ export function InlineMatrixBuilder({
                 {variants.map((variant, index) => (
                   <TableRow key={variant.id ?? buildVariantKey(variant.optionValues)}>
                     <TableCell className="font-medium">{variantLabel(variant)}</TableCell>
+                    {showVariantImages && (
+                      <TableCell>
+                        <VariantImageCell
+                          value={variant.image}
+                          onChange={(url) => updateVariantImage(index, url)}
+                          galleryImages={galleryImages}
+                          variantName={variantLabel(variant)}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Input value={variant.sku} onChange={(event) => updateVariantField(index, "sku", event.target.value)} placeholder="VD: SP-DEN-39" className="h-8" />
                     </TableCell>

@@ -10,7 +10,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { Check, Copy, ExternalLink, Loader2, Sparkles, Plus, Trash, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAdminMutationErrorMessage } from '@/app/admin/lib/mutation-error';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUploader } from '../../components/ImageUploader';
 import type { ImageItem } from '../../components/MultiImageUploader';
@@ -110,6 +110,7 @@ function ProductCreateContent() {
   const optionsData = useQuery(api.productOptions.listActiveWithValues);
 
   const [name, setName] = useState('');
+  const [activeTab, setActiveTab] = useState<'general' | 'variants'>('general');
   const [slug, setSlug] = useState('');
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
@@ -186,6 +187,11 @@ function ProductCreateContent() {
   const variantStock = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'variantStock');
     return (setting?.value as string) || 'variant';
+  }, [settingsData]);
+
+  const variantImages = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'variantImages');
+    return (setting?.value as 'inherit' | 'override' | 'both') ?? 'inherit';
   }, [settingsData]);
 
   const productTypeMode = useMemo(() => {
@@ -327,6 +333,8 @@ function ProductCreateContent() {
     return allProducts?.filter(p => p.status === 'Active') ?? [];
   }, [allProducts]);
   const showCombosPanel = enableCombos && saleMode === 'contact' && !hasVariants;
+
+  const showBaseImages = !hasVariants || variantImages !== 'override';
 
   const enableImageCrop = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'enableImageCrop');
@@ -760,7 +768,37 @@ function ProductCreateContent() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {variantEnabled && (
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700">
+          <button
+            type="button"
+            onClick={() => setActiveTab('general')}
+            className={cn(
+              'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+              activeTab === 'general'
+                ? 'border-orange-500 text-slate-900 dark:text-slate-100 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            Thông tin chung
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('variants')}
+            className={cn(
+              'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+              activeTab === 'variants'
+                ? 'border-orange-500 text-slate-900 dark:text-slate-100 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            Phiên bản sản phẩm
+          </button>
+        </div>
+      )}
+
+      {(!variantEnabled || activeTab === 'general') && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Thông tin cơ bản</CardTitle></CardHeader>
@@ -859,54 +897,94 @@ function ProductCreateContent() {
           <Card>
             <CardHeader><CardTitle className="text-base">Giá & Kho hàng</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {!hideBasePricing && (
-                <div className={enabledFields.has('salePrice') ? "grid grid-cols-2 gap-4" : ""}>
-                  <div className="space-y-2">
-                    <Label>
-                      Giá bán (VNĐ)
-                      {isPriceRequired && <span className="text-red-500">*</span>}
-                    </Label>
-                    <Input
-                      type="number"
-                      value={price}
-                      onChange={(e) =>{  setPrice(e.target.value); }}
-                      required={isPriceRequired}
-                      placeholder="0"
-                      min="0"
-                    />
-                    {priceHelper && (
-                      <p className="text-xs text-slate-500">{priceHelper}</p>
-                    )}
-                  </div>
-                  {enabledFields.has('salePrice') && (
-                    <div className="space-y-2">
-                      <Label>Giá so sánh (trước giảm)</Label>
-                      <Input type="number" value={salePrice} onChange={(e) =>{  setSalePrice(e.target.value); }} placeholder="0" min="0" />
-                      {salePriceHelper && (
-                        <p className="text-xs text-slate-500">{salePriceHelper}</p>
+              {hideBasePricing && hideBaseStock ? (
+                <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-4 text-sm text-amber-800 dark:text-amber-300">
+                  <p className="font-semibold">Sản phẩm có nhiều phiên bản biến thể</p>
+                  <p className="mt-1">
+                    Giá bán, giá so sánh và lượng tồn kho của từng phiên bản được quản lý riêng tại tab{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('variants')}
+                      className="font-bold underline hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
+                    >
+                      Phiên bản sản phẩm
+                    </button>.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {!hideBasePricing ? (
+                    <div className={enabledFields.has('salePrice') ? "grid grid-cols-2 gap-4" : ""}>
+                      <div className="space-y-2">
+                        <Label>
+                          Giá bán (VNĐ)
+                          {isPriceRequired && <span className="text-red-500">*</span>}
+                        </Label>
+                        <Input
+                          type="number"
+                          value={price}
+                          onChange={(e) =>{  setPrice(e.target.value); }}
+                          required={isPriceRequired}
+                          placeholder="0"
+                          min="0"
+                        />
+                        {priceHelper && (
+                          <p className="text-xs text-slate-500">{priceHelper}</p>
+                        )}
+                      </div>
+                      {enabledFields.has('salePrice') && (
+                        <div className="space-y-2">
+                          <Label>Giá so sánh (trước giảm)</Label>
+                          <Input type="number" value={salePrice} onChange={(e) =>{  setSalePrice(e.target.value); }} placeholder="0" min="0" />
+                          {salePriceHelper && (
+                            <p className="text-xs text-slate-500">{salePriceHelper}</p>
+                          )}
+                        </div>
                       )}
                     </div>
+                  ) : (
+                    variantEnabled && hasVariants && (
+                      <p className="text-xs text-slate-500 italic">
+                        Giá bán và giá so sánh của từng phiên bản được quản lý tại tab{' '}
+                        <button type="button" onClick={() => setActiveTab('variants')} className="font-semibold underline hover:text-slate-700">
+                          Phiên bản sản phẩm
+                        </button>.
+                      </p>
+                    )
                   )}
-                </div>
-              )}
-              {enabledFields.has('stock') && productType !== 'digital' && !hideBaseStock && (
-                <div className="space-y-2">
-                  <Label>Số lượng tồn kho</Label>
-                  <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
-                </div>
-              )}
-              {isAffiliateMode && (
-                <div className="space-y-2">
-                  <Label>Link Affiliate <span className="text-red-500">*</span></Label>
-                  <Input
-                    type="url"
-                    value={affiliateLink}
-                    onChange={(e) => { setAffiliateLink(e.target.value); }}
-                    placeholder="https://..."
-                    required
-                  />
-                  <p className="text-xs text-slate-500">Nút “Mua ngay” trên frontend sẽ mở link này.</p>
-                </div>
+
+                  {enabledFields.has('stock') && productType !== 'digital' && (
+                    !hideBaseStock ? (
+                      <div className="space-y-2">
+                        <Label>Số lượng tồn kho</Label>
+                        <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
+                      </div>
+                    ) : (
+                      variantEnabled && hasVariants && (
+                        <p className="text-xs text-slate-500 italic">
+                          Lượng tồn kho của từng phiên bản được quản lý tại tab{' '}
+                          <button type="button" onClick={() => setActiveTab('variants')} className="font-semibold underline hover:text-slate-700">
+                            Phiên bản sản phẩm
+                          </button>.
+                        </p>
+                      )
+                    )
+                  )}
+
+                  {isAffiliateMode && (
+                    <div className="space-y-2">
+                      <Label>Link Affiliate <span className="text-red-500">*</span></Label>
+                      <Input
+                        type="url"
+                        value={affiliateLink}
+                        onChange={(e) => { setAffiliateLink(e.target.value); }}
+                        placeholder="https://..."
+                        required
+                      />
+                      <p className="text-xs text-slate-500">Nút “Mua ngay” trên frontend sẽ mở link này.</p>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -971,46 +1049,7 @@ function ProductCreateContent() {
             </Card>
           )}
 
-          {variantEnabled && (
-            <Card>
-              <CardHeader><CardTitle className="text-base">Phiên bản sản phẩm</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Quản lý tùy chọn</Label>
-                  <Link href="/admin/product-options" target="_blank">
-                    <Button type="button" variant="outline" className="h-7 px-2 text-xs gap-1">
-                      <ExternalLink size={12} />
-                      Mở
-                    </Button>
-                  </Link>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="has-variants"
-                    checked={hasVariants}
-                    onChange={(e) =>{  setHasVariants(e.target.checked); }}
-                    className="w-4 h-4 rounded border-slate-300"
-                  />
-                  <Label htmlFor="has-variants" className="cursor-pointer">Sản phẩm có nhiều phiên bản</Label>
-                </div>
-                {hasVariants && (
-                  <InlineMatrixBuilder
-                    baseSku={resolvedSkuPreview || 'SP'}
-                    basePrice={Number.parseInt(price) || 0}
-                    optionCatalog={optionCatalog}
-                    initialSelections={variantSelections}
-                    initialVariants={variantRows}
-                    onChange={(selections, variants) => {
-                      setVariantSelections(selections);
-                      setVariantRows(variants);
-                    }}
-                    showPricing={variantPricing !== 'product'}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          )}
+
 
           {showCombosPanel && (
             <Card>
@@ -1844,26 +1883,28 @@ function ProductCreateContent() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader><CardTitle className="text-base">Ảnh sản phẩm</CardTitle></CardHeader>
-            <CardContent>
-              <ImageUploader
-                value={image}
-                storageId={imageStorageId}
-                onChange={(url, storageId) => {
-                  setImage(url);
-                  setImageStorageId(storageId);
-                }}
-                folder="products"
-                naming={{ entityName: slug.trim() || 'product', style: 'slug-index', index: 1 }}
-                deleteMode="defer"
-                aspectRatio="square"
-                cropAspectRatio={defaultImageAspectRatio}
-              />
-            </CardContent>
-          </Card>
+          {showBaseImages && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Ảnh sản phẩm</CardTitle></CardHeader>
+              <CardContent>
+                <ImageUploader
+                  value={image}
+                  storageId={imageStorageId}
+                  onChange={(url, storageId) => {
+                    setImage(url);
+                    setImageStorageId(storageId);
+                  }}
+                  folder="products"
+                  naming={{ entityName: slug.trim() || 'product', style: 'slug-index', index: 1 }}
+                  deleteMode="defer"
+                  aspectRatio="square"
+                  cropAspectRatio={defaultImageAspectRatio}
+                />
+              </CardContent>
+            </Card>
+          )}
 
-          {enabledFields.has('images') && image && (
+          {showBaseImages && enabledFields.has('images') && image && (
             <Card>
               <CardHeader><CardTitle className="text-base">Thư viện ảnh</CardTitle></CardHeader>
               <CardContent>
@@ -1891,6 +1932,52 @@ function ProductCreateContent() {
           )}
         </div>
       </div>
+      )}
+
+      {variantEnabled && activeTab === 'variants' && (
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Phiên bản sản phẩm</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Quản lý tùy chọn</Label>
+                <Link href="/admin/product-options" target="_blank">
+                  <Button type="button" variant="outline" className="h-7 px-2 text-xs gap-1">
+                    <ExternalLink size={12} />
+                    Mở
+                  </Button>
+                </Link>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="has-variants"
+                  checked={hasVariants}
+                  onChange={(e) =>{  setHasVariants(e.target.checked); }}
+                  className="w-4 h-4 rounded border-slate-300"
+                />
+                <Label htmlFor="has-variants" className="cursor-pointer">Sản phẩm có nhiều phiên bản</Label>
+              </div>
+              {hasVariants && (
+                <InlineMatrixBuilder
+                  baseSku={resolvedSkuPreview || 'SP'}
+                  basePrice={Number.parseInt(price) || 0}
+                  optionCatalog={optionCatalog}
+                  initialSelections={variantSelections}
+                  initialVariants={variantRows}
+                  onChange={(selections, variants) => {
+                    setVariantSelections(selections);
+                    setVariantRows(variants);
+                  }}
+                  showPricing={variantPricing !== 'product'}
+                  showVariantImages={variantImages !== 'inherit'}
+                  galleryImages={galleryItems.map(item => item.url).filter(Boolean)}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <HomeComponentStickyFooter
         isSubmitting={isSubmitting}

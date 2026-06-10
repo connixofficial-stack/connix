@@ -36,6 +36,8 @@ const inlineVariantDoc = v.object({
   price: v.number(),
   salePrice: v.optional(v.union(v.number(), v.null())),
   stock: v.number(),
+  image: v.optional(v.string()),
+  images: v.optional(v.array(v.string())),
   optionValues: v.array(inlineOptionValueDoc),
 });
 
@@ -129,6 +131,8 @@ type InlineVariantInput = {
   price: number;
   salePrice?: number | null;
   stock: number;
+  image?: string;
+  images?: string[];
   optionValues: Array<{
     optionId: Id<"productOptions">;
     valueId: Id<"productOptionValues">;
@@ -327,6 +331,8 @@ function normalizeInlineVariants(variants: InlineVariantInput[], baseSku: string
       price: Number.isFinite(variant.price) ? variant.price : 0,
       salePrice: resolveSalePrice(variant.salePrice),
       stock: Number.isFinite(variant.stock) ? Math.max(0, Math.trunc(variant.stock)) : 0,
+      image: variant.image,
+      images: variant.images,
       optionValues: variant.optionValues.filter((item) => Boolean(item.optionId && item.valueId)),
     }))
     .filter((variant) => variant.optionValues.length > 0);
@@ -446,6 +452,8 @@ async function upsertVariants(
       salePrice: variant.salePrice,
       stock: variant.stock,
       order: index,
+      image: variant.image,
+      images: variant.images,
       optionValues: variant.optionValues,
     };
 

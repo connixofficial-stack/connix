@@ -12,6 +12,8 @@ export type NormalizedVariantRow = {
   price: number;
   salePrice?: number;
   stock: number;
+  image?: string;
+  images?: string[];
   optionValues: Array<{
     optionId: Id<'productOptions'>;
     valueId: Id<'productOptionValues'>;
@@ -44,6 +46,8 @@ export const normalizeVariantRows = (rows: VariantRow[]): NormalizedVariantRow[]
       price: toFiniteNumber(row.price, 0),
       salePrice: toOptionalPositiveNumber(row.salePrice),
       stock: Math.max(0, Math.trunc(toFiniteNumber(row.stock, 0))),
+      image: row.image,
+      images: row.images,
       optionValues: row.optionValues.filter((item) => Boolean(item.optionId && item.valueId)),
     }))
     .filter((row) => row.optionValues.length > 0);

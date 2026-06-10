@@ -1,0 +1,174 @@
+// Template: app/admin/{{module-slug}}/[id]/edit/page.tsx
+// Replace: {{moduleName}}, {{ModuleName}}, {{module-slug}}, {{displayName}}
+
+'use client';
+
+import React, { useState, use, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button, Card, CardContent, Input, Label } from '../../../components/ui';
+
+const MODULE_KEY = '{{moduleName}}';
+
+export default function {{ModuleName}}EditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const router = useRouter();
+
+  // Queries
+  const itemData = useQuery(api.{{moduleName}}.getById, { id: id as Id<"{{moduleName}}"> });
+  const updateItem = useMutation(api.{{moduleName}}.update);
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+
+  // Form state
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check which fields are enabled
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  // Sync form state when data loads
+  useEffect(() => {
+    if (itemData) {
+      setName(itemData.name);
+      setSlug(itemData.slug);
+      setDescription(itemData.description || '');
+      setStatus(itemData.status);
+    }
+  }, [itemData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await updateItem({
+        id: id as Id<"{{moduleName}}">,
+        name: name.trim(),
+        slug: slug.trim(),
+        description: description.trim() || undefined,
+        status,
+      });
+      toast.success('Cập nhật thành công');
+      router.push('/admin/{{module-slug}}');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể cập nhật');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Loading state
+  if (itemData === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Not found
+  if (itemData === null) {
+    return (
+      <div className="text-center py-8 text-slate-500">
+        Không tìm thấy {{displayName}}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa {{displayName}}</h1>
+          <Link href="/admin/{{module-slug}}" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
+        </div>
+      </div>
+
+      {/* Form */}
+      <Card className="max-w-md mx-auto md:mx-0">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="p-6 space-y-4">
+            {/* Name - system field, always shown */}
+            <div className="space-y-2">
+              <Label>Tên <span className="text-red-500">*</span></Label>
+              <Input 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+                placeholder="Nhập tên..." 
+                autoFocus 
+              />
+            </div>
+
+            {/* Slug - system field, always shown */}
+            <div className="space-y-2">
+              <Label>Slug</Label>
+              <Input 
+                value={slug} 
+                onChange={(e) => setSlug(e.target.value)} 
+                placeholder="slug" 
+                className="font-mono text-sm" 
+              />
+            </div>
+
+            {/* Description - conditional field */}
+            {enabledFields.has('description') && (
+              <div className="space-y-2">
+                <Label>Mô tả</Label>
+                <Input 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  placeholder="Mô tả ngắn..." 
+                />
+              </div>
+            )}
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label>Trạng thái</Label>
+              <select 
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                <option value="Active">Hoạt động</option>
+                <option value="Inactive">Ẩn</option>
+              </select>
+            </div>
+          </CardContent>
+          
+          {/* Actions */}
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => router.push('/admin/{{module-slug}}')}
+            >
+              Hủy bỏ
+            </Button>
+            <Button type="submit" variant="accent" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+              Lưu thay đổi
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+}

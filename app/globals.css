@@ -1,0 +1,429 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode instead of media query */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --font-active: var(--font-be-vietnam-pro);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  color-scheme: dark;
+}
+
+html[data-theme='light'],
+body[data-theme='light'] {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-be-vietnam-pro), var(--font-geist-sans), sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-active {
+  font-family: var(--font-active), var(--font-be-vietnam-pro), var(--font-geist-sans), sans-serif;
+  font-synthesis: none;
+}
+
+/* ============================================
+   Custom Scrollbar - Best Practice
+   - Brand color, auto-hide when idle
+   - Desktop & Mobile unified experience
+   ============================================ */
+
+:root {
+  --scrollbar-color: #3b82f6;
+}
+
+/* Base scrollbar - 2px, 60% opacity brand color */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--scrollbar-color) 60%, transparent);
+  border-radius: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-color);
+}
+
+/* Firefox */
+@supports (scrollbar-color: auto) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--scrollbar-color) 60%, transparent) transparent;
+  }
+}
+
+/* Utility class */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-color);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Custom scrollbar mỏng cho flyout/dropdown menu */
+.scrollbar-menu-thin {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-color) 20%, transparent) transparent;
+}
+
+.scrollbar-menu-thin::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+.scrollbar-menu-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-menu-thin::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--scrollbar-color) 20%, transparent);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+.scrollbar-menu-thin::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--scrollbar-color) 60%, transparent);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-color) 75%, transparent) transparent;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--scrollbar-color) 75%, transparent);
+  border-radius: 9999px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ============================================
+   Rich editor output (site render)
+   - Match Lexical editor styles on frontend
+   ============================================ */
+.editor-content p {
+  margin: 0 0 8px 0;
+}
+
+.editor-content h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.editor-content h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.editor-content h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.editor-content ul {
+  list-style-type: disc;
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.editor-content ol {
+  list-style-type: decimal;
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.editor-content li {
+  margin: 4px 0;
+}
+
+.editor-content blockquote {
+  border-left: 4px solid #cbd5e1;
+  margin: 8px 0;
+  padding-left: 16px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.editor-content strong {
+  font-weight: 700;
+}
+
+.editor-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.editor-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+.editor-content .editor-youtube {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  margin: 12px 0;
+  overflow: hidden;
+  background: #000;
+}
+.editor-content .editor-youtube iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 6px;
+  display: block;
+}
+
+/* ============================================
+   Marquee Animation - for ProductCategories
+   ============================================ */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================
+   Combo Animations
+   ============================================ */
+@keyframes combo-text-highlight {
+  0%, 100% {
+    color: #ef4444; /* Red */
+  }
+  33% {
+    color: #f97316; /* Orange */
+  }
+  66% {
+    color: #eab308; /* Yellow */
+  }
+}
+
+@keyframes combo-border-rainbow {
+  0%, 100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  }
+  20% {
+    border-color: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  }
+  40% {
+    border-color: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+  60% {
+    border-color: #eab308;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+  }
+  80% {
+    border-color: #a855f7;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+  }
+}
+
+@keyframes combo-luxury-sheen {
+  0%, 100% {
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+  }
+  50% {
+    box-shadow: 0 18px 52px rgba(15, 23, 42, 0.14);
+  }
+}
+
+@keyframes combo-luxury-glint {
+  0% {
+    transform: translateX(-130%) skewX(-18deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.48;
+  }
+  55%, 100% {
+    transform: translateX(160%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes combo-typing-text {
+  0%, 12% {
+    max-width: 0;
+  }
+  48%, 100% {
+    max-width: 18rem;
+  }
+}
+
+@keyframes combo-typing-caret {
+  0%, 100% {
+    border-color: currentColor;
+  }
+  50% {
+    border-color: transparent;
+  }
+}
+
+@keyframes combo-fire-glow {
+  0%, 100% {
+    box-shadow: 0 14px 42px rgba(249, 115, 22, 0.14);
+  }
+  50% {
+    box-shadow: 0 18px 56px rgba(239, 68, 68, 0.22);
+  }
+}
+
+@keyframes combo-letter-wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-0.15em);
+  }
+}
+
+.animate-combo-letter-wave {
+  animation: combo-letter-wave 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  display: inline-block;
+  will-change: transform;
+}
+
+@keyframes combo-fire-text {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.5));
+    transform: translateY(0);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.7));
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes combo-sparkle-card {
+  0%, 100% {
+    box-shadow: 0 12px 36px rgba(99, 102, 241, 0.1);
+  }
+  50% {
+    box-shadow: 0 18px 54px rgba(168, 85, 247, 0.18);
+  }
+}
+
+@keyframes combo-sparkle-text {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-combo-text-highlight {
+  animation: combo-text-highlight 3s infinite linear;
+}
+
+.animate-combo-border-rainbow {
+  animation: combo-border-rainbow 4s infinite linear;
+}
+
+.animate-combo-luxury-sheen {
+  animation: combo-luxury-sheen 4.8s ease-in-out infinite;
+}
+
+.animate-combo-luxury-sheen::before {
+  animation: combo-luxury-glint 5.8s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  content: "";
+  height: 160%;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: -30%;
+  width: 32%;
+}
+
+.animate-combo-typing-text {
+  animation: combo-typing-text 3.8s steps(18, end) infinite, combo-typing-caret 0.8s step-end infinite;
+  border-right: 2px solid currentColor;
+  display: inline-block;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.animate-combo-fire {
+  animation: combo-fire-glow 3.4s ease-in-out infinite;
+}
+
+
+
+.animate-combo-fire-text {
+  animation: combo-fire-text 1.8s ease-in-out infinite;
+  color: #f97316;
+}
+
+.animate-combo-sparkle {
+  animation: combo-sparkle-card 4s ease-in-out infinite;
+}
+
+.animate-combo-sparkle-text {
+  animation: combo-sparkle-text 2.8s linear infinite;
+  background: linear-gradient(
+    90deg,
+    var(--combo-sparkle-a, currentColor),
+    var(--combo-sparkle-b, #fbbf24),
+    var(--combo-sparkle-c, #a855f7),
+    var(--combo-sparkle-a, currentColor)
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

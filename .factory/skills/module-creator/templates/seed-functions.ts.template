@@ -1,0 +1,130 @@
+// Template: Add to convex/seed.ts
+// Replace: {{moduleName}}, {{ModuleName}}, {{displayName}}, {{fields}}
+
+// ============ SEED {{ModuleName}} ============
+
+// Seed {{ModuleName}} Module
+export const seed{{ModuleName}} = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("{{moduleName}}").first();
+    if (existing) return null;
+
+    // Seed sample data
+    const items = [
+      { name: "Mẫu 1", slug: "mau-1", description: "Mô tả mẫu 1", status: "Active" as const, order: 0 },
+      { name: "Mẫu 2", slug: "mau-2", description: "Mô tả mẫu 2", status: "Active" as const, order: 1 },
+      { name: "Mẫu 3", slug: "mau-3", description: "Mô tả mẫu 3", status: "Inactive" as const, order: 2 },
+    ];
+
+    for (const item of items) {
+      await ctx.db.insert("{{moduleName}}", item);
+    }
+
+    // Seed module features
+    const features = [
+      { moduleKey: "{{moduleName}}", featureKey: "enableTags", name: "Tags", enabled: true },
+      { moduleKey: "{{moduleName}}", featureKey: "enableFeatured", name: "Nổi bật", enabled: true },
+    ];
+
+    for (const f of features) {
+      const existing = await ctx.db
+        .query("moduleFeatures")
+        .withIndex("by_module_feature", q => q.eq("moduleKey", f.moduleKey).eq("featureKey", f.featureKey))
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("moduleFeatures", f);
+      }
+    }
+
+    // Seed module fields
+    const fields = [
+      { moduleKey: "{{moduleName}}", fieldKey: "name", name: "Tên", type: "string" as const, required: true, enabled: true, isSystem: true, order: 0 },
+      { moduleKey: "{{moduleName}}", fieldKey: "slug", name: "Slug", type: "string" as const, required: true, enabled: true, isSystem: true, order: 1 },
+      { moduleKey: "{{moduleName}}", fieldKey: "description", name: "Mô tả", type: "text" as const, required: false, enabled: true, isSystem: false, order: 2 },
+      { moduleKey: "{{moduleName}}", fieldKey: "status", name: "Trạng thái", type: "select" as const, required: true, enabled: true, isSystem: true, order: 3 },
+      { moduleKey: "{{moduleName}}", fieldKey: "order", name: "Thứ tự", type: "number" as const, required: true, enabled: true, isSystem: true, order: 4 },
+    ];
+
+    for (const f of fields) {
+      const existing = await ctx.db
+        .query("moduleFields")
+        .withIndex("by_module", q => q.eq("moduleKey", f.moduleKey))
+        .collect();
+      const fieldExists = existing.some(e => e.fieldKey === f.fieldKey);
+      if (!fieldExists) {
+        await ctx.db.insert("moduleFields", f);
+      }
+    }
+
+    // Seed module settings
+    const settings = [
+      { moduleKey: "{{moduleName}}", settingKey: "itemsPerPage", value: 10 },
+      { moduleKey: "{{moduleName}}", settingKey: "defaultStatus", value: "Active" },
+    ];
+
+    for (const s of settings) {
+      const existing = await ctx.db
+        .query("moduleSettings")
+        .withIndex("by_module_setting", q => q.eq("moduleKey", s.moduleKey).eq("settingKey", s.settingKey))
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("moduleSettings", s);
+      }
+    }
+
+    return null;
+  },
+});
+
+// Clear {{ModuleName}} Data (keeps config)
+export const clear{{ModuleName}}Data = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const items = await ctx.db.query("{{moduleName}}").collect();
+    for (const item of items) {
+      await ctx.db.delete(item._id);
+    }
+    return null;
+  },
+});
+
+// Clear {{ModuleName}} Config (features, fields, settings)
+export const clear{{ModuleName}}Config = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    // Delete features
+    const features = await ctx.db
+      .query("moduleFeatures")
+      .withIndex("by_module", q => q.eq("moduleKey", "{{moduleName}}"))
+      .collect();
+    for (const f of features) {
+      await ctx.db.delete(f._id);
+    }
+
+    // Delete fields
+    const fields = await ctx.db
+      .query("moduleFields")
+      .withIndex("by_module", q => q.eq("moduleKey", "{{moduleName}}"))
+      .collect();
+    for (const f of fields) {
+      await ctx.db.delete(f._id);
+    }
+
+    // Delete settings
+    const settings = await ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module", q => q.eq("moduleKey", "{{moduleName}}"))
+      .collect();
+    for (const s of settings) {
+      await ctx.db.delete(s._id);
+    }
+
+    return null;
+  },
+});
+
+// ============ END {{ModuleName}} ============

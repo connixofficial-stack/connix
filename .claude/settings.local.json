@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint:*)",
+      "Bash(npm run -s typecheck)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run)",
+      "Bash(git diff:*)",
+      "Bash(npx eslint \"app/admin/home-components/create/shared.tsx\" \"app/admin/home-components/page.tsx\" \"app/admin/home-components/[id]/edit/page.tsx\" \"app/admin/home-components/_shared/legacy/HomeComponentLegacyEditor.tsx\" \"app/admin/home-components/gallery/[id]/edit/page.tsx\" \"app/admin/home-components/create/gallery/page.tsx\" \"app/admin/home-components/create/product-list/page.tsx\" \"app/admin/home-components/create/product-list/_shared.tsx\" \"app/admin/home-components/create/partners/page.tsx\" \"app/admin/home-components/create/trust-badges/page.tsx\" \"app/admin/home-components/create/service-list/page.tsx\" \"app/admin/home-components/create/blog/page.tsx\" \"app/admin/home-components/trust-badges/[id]/edit/page.tsx\")",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

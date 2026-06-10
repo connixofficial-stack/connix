@@ -1,0 +1,369 @@
+// Template: app/system/modules/{{module-slug}}/page.tsx
+// Replace: {{moduleName}}, {{ModuleName}}, {{module-slug}}, {{displayName}}, {{Icon}}, {{iconColor}}
+
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { toast } from 'sonner';
+import { {{Icon}}, Loader2, Database, Trash2, RefreshCw, Settings } from 'lucide-react';
+import { FieldConfig } from '@/types/moduleConfig';
+import { 
+  ModuleHeader, ModuleStatus, ConventionNote, Code,
+  SettingsCard, SettingInput, SettingSelect,
+  FeaturesCard, FieldsCard
+} from '@/components/modules/shared';
+import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+
+const MODULE_KEY = '{{moduleName}}';
+
+type FeaturesState = Record<string, boolean>;
+type SettingsState = { itemsPerPage: number; defaultStatus: string };
+type TabType = 'config' | 'data';
+
+export default function {{ModuleName}}ConfigPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('config');
+
+  // Config queries
+  const moduleData = useQuery(api.admin.modules.getModuleByKey, { key: MODULE_KEY });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const fieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+
+  // Data queries
+  const itemsData = useQuery(api.{{moduleName}}.listAll);
+
+  // Mutations
+  const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
+  const updateField = useMutation(api.admin.modules.updateModuleField);
+  const setSetting = useMutation(api.admin.modules.setModuleSetting);
+  const seedModule = useMutation(api.seed.seed{{ModuleName}});
+  const clearData = useMutation(api.seed.clear{{ModuleName}}Data);
+
+  // Local state
+  const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
+  const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ itemsPerPage: 10, defaultStatus: 'Active' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isLoading = moduleData === undefined || featuresData === undefined || 
+                    fieldsData === undefined || settingsData === undefined;
+
+  // Sync features
+  useEffect(() => {
+    if (featuresData) {
+      const features: FeaturesState = {};
+      featuresData.forEach(f => { features[f.featureKey] = f.enabled; });
+      setLocalFeatures(features);
+    }
+  }, [featuresData]);
+
+  // Sync fields
+  useEffect(() => {
+    if (fieldsData) {
+      setLocalFields(fieldsData.map(f => ({
+        id: f._id,
+        key: f.fieldKey,
+        name: f.name,
+        type: f.type,
+        required: f.required,
+        enabled: f.enabled,
+        isSystem: f.isSystem,
+        linkedFeature: f.linkedFeature,
+      })));
+    }
+  }, [fieldsData]);
+
+  // Sync settings
+  useEffect(() => {
+    if (settingsData) {
+      const itemsPerPage = settingsData.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 10;
+      const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Active';
+      setLocalSettings({ itemsPerPage, defaultStatus });
+    }
+  }, [settingsData]);
+
+  // Server state for comparison
+  const serverFeatures = useMemo(() => {
+    const result: FeaturesState = {};
+    featuresData?.forEach(f => { result[f.featureKey] = f.enabled; });
+    return result;
+  }, [featuresData]);
+
+  const serverFields = useMemo(() => {
+    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
+  }, [fieldsData]);
+
+  const serverSettings = useMemo(() => {
+    const itemsPerPage = settingsData?.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 10;
+    const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Active';
+    return { itemsPerPage, defaultStatus };
+  }, [settingsData]);
+
+  // Check for changes
+  const hasChanges = useMemo(() => {
+    const featuresChanged = Object.keys(localFeatures).some(key => localFeatures[key] !== serverFeatures[key]);
+    const fieldsChanged = localFields.some(f => {
+      const server = serverFields.find(s => s.id === f.id);
+      return server && f.enabled !== server.enabled;
+    });
+    const settingsChanged = localSettings.itemsPerPage !== serverSettings.itemsPerPage ||
+                           localSettings.defaultStatus !== serverSettings.defaultStatus;
+    return featuresChanged || fieldsChanged || settingsChanged;
+  }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
+
+  // Handlers
+  const handleToggleFeature = (key: string) => {
+    setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    setLocalFields(prev => prev.map(f => 
+      f.linkedFeature === key ? { ...f, enabled: !localFeatures[key] } : f
+    ));
+  };
+
+  const handleToggleField = (id: string) => {
+    const field = localFields.find(f => f.id === id);
+    if (field?.linkedFeature) {
+      handleToggleFeature(field.linkedFeature);
+    } else {
+      setLocalFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Save features
+      for (const key of Object.keys(localFeatures)) {
+        if (localFeatures[key] !== serverFeatures[key]) {
+          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+        }
+      }
+      // Save fields
+      for (const field of localFields) {
+        const server = serverFields.find(s => s.id === field.id);
+        if (server && field.enabled !== server.enabled) {
+          await updateField({ id: field.id as any, enabled: field.enabled });
+        }
+      }
+      // Save settings
+      if (localSettings.itemsPerPage !== serverSettings.itemsPerPage) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'itemsPerPage', value: localSettings.itemsPerPage });
+      }
+      if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus });
+      }
+      toast.success('Đã lưu cấu hình thành công!');
+    } catch {
+      toast.error('Có lỗi xảy ra khi lưu cấu hình');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Data tab handlers
+  const handleSeedData = async () => {
+    toast.loading('Đang tạo dữ liệu mẫu...');
+    await seedModule();
+    toast.dismiss();
+    toast.success('Đã tạo dữ liệu mẫu thành công!');
+  };
+
+  const handleClearData = async () => {
+    if (!confirm('Xóa toàn bộ dữ liệu?')) return;
+    toast.loading('Đang xóa dữ liệu...');
+    await clearData();
+    toast.dismiss();
+    toast.success('Đã xóa toàn bộ dữ liệu!');
+  };
+
+  const handleResetData = async () => {
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    toast.loading('Đang reset dữ liệu...');
+    await clearData();
+    await seedModule();
+    toast.dismiss();
+    toast.success('Đã reset dữ liệu thành công!');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-{{iconColor}}-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <ModuleHeader
+        icon={{{Icon}}}
+        title="Module {{displayName}}"
+        description="Cấu hình {{displayName}}"
+        iconBgClass="bg-{{iconColor}}-500/10"
+        iconTextClass="text-{{iconColor}}-600 dark:text-{{iconColor}}-400"
+        buttonClass="bg-{{iconColor}}-600 hover:bg-{{iconColor}}-500"
+        onSave={activeTab === 'config' ? handleSave : undefined}
+        hasChanges={activeTab === 'config' ? hasChanges : false}
+        isSaving={isSaving}
+      />
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setActiveTab('config')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'config'
+              ? 'border-{{iconColor}}-500 text-{{iconColor}}-600 dark:text-{{iconColor}}-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Settings size={16} /> Cấu hình
+        </button>
+        <button
+          onClick={() => setActiveTab('data')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'data'
+              ? 'border-{{iconColor}}-500 text-{{iconColor}}-600 dark:text-{{iconColor}}-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Database size={16} /> Dữ liệu
+        </button>
+      </div>
+
+      {activeTab === 'config' && (
+        <>
+          <ModuleStatus isCore={moduleData?.isCore ?? false} enabled={moduleData?.enabled ?? true} toggleColor="bg-{{iconColor}}-500" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <SettingsCard>
+                <SettingInput 
+                  label="Số mục / trang" 
+                  value={localSettings.itemsPerPage} 
+                  onChange={(v) => setLocalSettings({...localSettings, itemsPerPage: v})}
+                  focusColor="focus:border-{{iconColor}}-500"
+                />
+                <SettingSelect
+                  label="Trạng thái mặc định"
+                  value={localSettings.defaultStatus}
+                  onChange={(v) => setLocalSettings({...localSettings, defaultStatus: v})}
+                  options={[{ value: 'Active', label: 'Hoạt động' }, { value: 'Inactive', label: 'Ẩn' }]}
+                  focusColor="focus:border-{{iconColor}}-500"
+                />
+              </SettingsCard>
+
+              {Object.keys(localFeatures).length > 0 && (
+                <FeaturesCard
+                  features={Object.keys(localFeatures).map(key => ({
+                    config: { key, label: key, icon: {{Icon}} },
+                    enabled: localFeatures[key] ?? false
+                  }))}
+                  onToggle={handleToggleFeature}
+                  toggleColor="bg-{{iconColor}}-500"
+                />
+              )}
+            </div>
+
+            <FieldsCard
+              title="Trường dữ liệu"
+              icon={{{Icon}}}
+              iconColorClass="text-{{iconColor}}-500"
+              fields={localFields}
+              onToggle={handleToggleField}
+              fieldColorClass="bg-{{iconColor}}-500/10 text-{{iconColor}}-600 dark:text-{{iconColor}}-400"
+              toggleColor="bg-{{iconColor}}-500"
+            />
+          </div>
+
+          <ConventionNote>
+            <strong>Convention:</strong> Slug tự động từ tên. Trường <Code>order</Code> và <Code>status</Code> bắt buộc theo Rails convention.
+          </ConventionNote>
+        </>
+      )}
+
+      {activeTab === 'data' && (
+        <div className="space-y-6">
+          {/* Action buttons */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">Quản lý dữ liệu mẫu</h3>
+                <p className="text-sm text-slate-500 mt-1">Seed, clear hoặc reset dữ liệu cho module</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleSeedData} className="gap-2">
+                  <Database size={16} /> Seed Data
+                </Button>
+                <Button variant="outline" onClick={handleClearData} className="gap-2 text-red-500 hover:text-red-600">
+                  <Trash2 size={16} /> Clear All
+                </Button>
+                <Button onClick={handleResetData} className="gap-2 bg-{{iconColor}}-600 hover:bg-{{iconColor}}-500">
+                  <RefreshCw size={16} /> Reset
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-{{iconColor}}-500/10 rounded-lg">
+                  <{{Icon}} className="w-5 h-5 text-{{iconColor}}-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{itemsData?.length ?? 0}</p>
+                  <p className="text-sm text-slate-500">{{displayName}}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Data Table */}
+          <Card>
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+              <{{Icon}} className="w-5 h-5 text-{{iconColor}}-500" />
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">{{displayName}} ({itemsData?.length ?? 0})</h3>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tên</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {itemsData?.slice(0, 10).map(item => (
+                  <TableRow key={item._id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-slate-500 font-mono text-sm">{item.slug}</TableCell>
+                    <TableCell>
+                      <Badge variant={item.status === 'Active' ? 'default' : 'secondary'}>
+                        {item.status === 'Active' ? 'Hoạt động' : 'Ẩn'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {(!itemsData || itemsData.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-8 text-slate-500">
+                      Chưa có dữ liệu. Nhấn &quot;Seed Data&quot; để tạo dữ liệu mẫu.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            {itemsData && itemsData.length > 10 && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
+                Hiển thị 10 / {itemsData.length} mục
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,228 @@
+// Template: app/admin/{{module-slug}}/page.tsx
+// Replace: {{moduleName}}, {{ModuleName}}, {{module-slug}}, {{displayName}}, {{Icon}}
+
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, {{Icon}} } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
+
+export default function {{ModuleName}}ListPage() {
+  return (
+    <ModuleGuard moduleKey="{{moduleName}}">
+      <{{ModuleName}}Content />
+    </ModuleGuard>
+  );
+}
+
+function {{ModuleName}}Content() {
+  // Queries & Mutations
+  const itemsData = useQuery(api.{{moduleName}}.listAll);
+  const deleteItem = useMutation(api.{{moduleName}}.remove);
+  const seedModule = useMutation(api.seed.seed{{ModuleName}});
+  const clearData = useMutation(api.seed.clear{{ModuleName}}Data);
+
+  // State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Id<"{{moduleName}}">[]>([]);
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+
+  const isLoading = itemsData === undefined;
+
+  // Filtered & sorted data
+  const items = useMemo(() => {
+    return itemsData?.map(item => ({
+      ...item,
+      id: item._id,
+    })) || [];
+  }, [itemsData]);
+
+  const filteredData = useMemo(() => {
+    let data = [...items];
+    if (searchTerm) {
+      data = data.filter(item => 
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.slug.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return data;
+  }, [items, searchTerm]);
+
+  const sortedData = useSortableData(filteredData, sortConfig);
+
+  // Handlers
+  const handleSort = (key: string) => {
+    setSortConfig(prev => ({ 
+      key, 
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' 
+    }));
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id));
+  };
+
+  const toggleSelectItem = (id: Id<"{{moduleName}}">) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleDelete = async (id: Id<"{{moduleName}}">) => {
+    if (confirm('Xóa mục này?')) {
+      try {
+        await deleteItem({ id });
+        toast.success('Đã xóa thành công');
+      } catch {
+        toast.error('Không thể xóa');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Xóa ${selectedIds.length} mục đã chọn?`)) {
+      try {
+        for (const id of selectedIds) {
+          await deleteItem({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} mục`);
+      } catch {
+        toast.error('Không thể xóa');
+      }
+    }
+  };
+
+  const handleReset = async () => {
+    if (confirm('Reset dữ liệu? Tất cả dữ liệu cũ sẽ bị xóa.')) {
+      await clearData();
+      await seedModule();
+      setSelectedIds([]);
+      toast.success('Đã reset dữ liệu');
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{{displayName}}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý {{displayName}}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleReset} className="gap-2">
+            <RefreshCw size={16}/> Reset
+          </Button>
+          <Link href="/admin/{{module-slug}}/create">
+            <Button className="gap-2"><Plus size={16}/> Thêm mới</Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Bulk Actions */}
+      <BulkActionBar 
+        selectedCount={selectedIds.length} 
+        onDelete={handleBulkDelete} 
+        onClearSelection={() => setSelectedIds([])} 
+      />
+
+      {/* Table Card */}
+      <Card>
+        {/* Search */}
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="relative max-w-xs">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input 
+              placeholder="Tìm kiếm..." 
+              className="pl-9" 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40px]">
+                <SelectCheckbox 
+                  checked={selectedIds.length === sortedData.length && sortedData.length > 0} 
+                  onChange={toggleSelectAll} 
+                  indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} 
+                />
+              </TableHead>
+              <SortableHeader label="Tên" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+              <TableHead className="text-right">Hành động</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedData.map(item => (
+              <TableRow key={item.id} className={selectedIds.includes(item.id) ? 'bg-blue-500/5' : ''}>
+                <TableCell>
+                  <SelectCheckbox 
+                    checked={selectedIds.includes(item.id)} 
+                    onChange={() => toggleSelectItem(item.id)} 
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell className="text-slate-500 font-mono text-sm">{item.slug}</TableCell>
+                <TableCell>
+                  <Badge variant={item.status === 'Active' ? 'default' : 'secondary'}>
+                    {item.status === 'Active' ? 'Hoạt động' : 'Ẩn'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Link href={`/admin/{{module-slug}}/${item.id}/edit`}>
+                      <Button variant="ghost" size="icon"><Edit size={16}/></Button>
+                    </Link>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-red-500 hover:text-red-600" 
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 size={16}/>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {sortedData.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                  {searchTerm ? 'Không tìm thấy kết quả' : 'Chưa có dữ liệu. Nhấn Reset để tạo dữ liệu mẫu.'}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+
+        {/* Footer */}
+        {sortedData.length > 0 && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
+            Hiển thị {sortedData.length} / {items.length} mục
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

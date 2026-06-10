@@ -1,0 +1,266 @@
+{
+  "affiliate-shop": {
+    "products": ["affiliate product", "ecommerce product", "shopping items"],
+    "posts": ["online shopping", "ecommerce tips", "deal promotion"],
+    "gallery": ["online store", "shopping lifestyle", "marketplace"],
+    "logos": ["ecommerce logo", "shopping logo", "minimal retail logo"]
+  },
+  "ai-accounts": {
+    "products": ["ai software", "app interface", "digital product mockup"],
+    "posts": ["ai productivity", "artificial intelligence", "saas tools"],
+    "gallery": ["ai workspace", "technology abstract", "data visualization"],
+    "logos": ["ai logo", "tech logo", "minimal startup logo"]
+  },
+  "appliances": {
+    "products": ["home appliance", "kitchen appliance", "modern appliance"],
+    "posts": ["home appliance tips", "kitchen lifestyle", "smart home"],
+    "gallery": ["modern kitchen", "home appliances", "appliance showroom"],
+    "logos": ["appliance logo", "home brand logo", "minimal electronics logo"]
+  },
+  "auto": {
+    "products": ["car exterior", "car interior", "auto showroom"],
+    "posts": ["car review", "auto maintenance", "test drive"],
+    "gallery": ["car showroom", "automotive detail", "luxury car"],
+    "logos": ["auto logo", "car brand logo", "minimal automotive logo"]
+  },
+  "auto-parts": {
+    "products": ["car parts", "auto parts", "vehicle accessories"],
+    "posts": ["auto repair", "car maintenance", "vehicle service"],
+    "gallery": ["workshop", "mechanic tools", "garage"],
+    "logos": ["auto parts logo", "garage logo", "minimal mechanic logo"]
+  },
+  "baby-care": {
+    "products": ["baby products", "baby clothing", "baby accessories"],
+    "posts": ["baby care", "parenting tips", "newborn care"],
+    "gallery": ["nursery", "baby lifestyle", "family care"],
+    "logos": ["baby store logo", "kids logo", "minimal baby logo"]
+  },
+  "bakery": {
+    "products": ["bakery product", "fresh bread", "cake product"],
+    "posts": ["baking tips", "pastry recipe", "bakery story"],
+    "gallery": ["bakery shop", "bread display", "pastry counter"],
+    "logos": ["bakery logo", "bread logo", "minimal pastry logo"]
+  },
+  "beauty-spa": {
+    "products": ["spa products", "skincare product", "beauty treatment"],
+    "posts": ["spa tips", "skincare routine", "wellness"],
+    "gallery": ["spa interior", "spa treatment", "relaxation"],
+    "logos": ["spa logo", "beauty logo", "minimal wellness logo"]
+  },
+  "books": {
+    "products": ["book cover", "stack of books", "book product"],
+    "posts": ["reading tips", "book review", "library"],
+    "gallery": ["bookstore", "library shelves", "reading corner"],
+    "logos": ["book logo", "library logo", "minimal bookstore logo"]
+  },
+  "business": {
+    "products": ["business service", "consulting", "corporate meeting"],
+    "posts": ["business strategy", "management tips", "corporate news"],
+    "gallery": ["office interior", "business team", "conference room"],
+    "logos": ["business logo", "corporate logo", "minimal professional logo"]
+  },
+  "cafe": {
+    "products": ["coffee product", "cafe drinks", "coffee beans"],
+    "posts": ["coffee culture", "barista tips", "cafe story"],
+    "gallery": ["cafe interior", "coffee shop", "latte art"],
+    "logos": ["cafe logo", "coffee logo", "minimal coffee logo"]
+  },
+  "construction": {
+    "products": ["construction materials", "building tools", "construction equipment"],
+    "posts": ["construction project", "architecture", "building process"],
+    "gallery": ["construction site", "building exterior", "architecture detail"],
+    "logos": ["construction logo", "builder logo", "minimal construction logo"]
+  },
+  "cosmetics": {
+    "products": ["cosmetics product", "makeup flatlay", "skincare bottle"],
+    "posts": ["beauty routine", "makeup tips", "skincare advice"],
+    "gallery": ["beauty studio", "cosmetics display", "makeup collection"],
+    "logos": ["cosmetics logo", "beauty brand logo", "minimal makeup logo"]
+  },
+  "courses": {
+    "products": ["online course", "learning platform", "education materials"],
+    "posts": ["learning tips", "education blog", "study guide"],
+    "gallery": ["online class", "study workspace", "training session"],
+    "logos": ["education logo", "course logo", "minimal learning logo"]
+  },
+  "design-services": {
+    "products": ["design service", "branding mockup", "creative studio"],
+    "posts": ["design trends", "branding tips", "creative process"],
+    "gallery": ["design studio", "creative workspace", "branding materials"],
+    "logos": ["design logo", "creative logo", "minimal studio logo"]
+  },
+  "electronics": {
+    "products": ["electronics product", "smartphone product", "gadget flatlay"],
+    "posts": ["tech news", "device review", "electronics tips"],
+    "gallery": ["electronics store", "tech workspace", "gadgets"],
+    "logos": ["electronics logo", "tech brand logo", "minimal gadget logo"]
+  },
+  "environment": {
+    "products": ["eco product", "sustainable product", "green technology"],
+    "posts": ["sustainability", "eco tips", "green living"],
+    "gallery": ["nature landscape", "green energy", "recycling"],
+    "logos": ["eco logo", "green logo", "minimal sustainability logo"]
+  },
+  "fashion": {
+    "products": ["fashion product", "clothing flatlay", "apparel mockup"],
+    "posts": ["fashion tips", "style inspiration", "outfit ideas"],
+    "gallery": ["fashion photoshoot", "runway", "fabric texture"],
+    "logos": ["fashion logo", "apparel logo", "minimal fashion logo"]
+  },
+  "fitness": {
+    "products": ["fitness equipment", "workout gear", "gym accessories"],
+    "posts": ["fitness tips", "workout routine", "healthy lifestyle"],
+    "gallery": ["gym interior", "fitness class", "training"],
+    "logos": ["fitness logo", "gym logo", "minimal fitness logo"]
+  },
+  "food": {
+    "products": ["fresh food", "grocery products", "food packaging"],
+    "posts": ["healthy recipes", "food tips", "meal prep"],
+    "gallery": ["market display", "fresh produce", "food store"],
+    "logos": ["food logo", "grocery logo", "minimal food logo"]
+  },
+  "gaming-accounts": {
+    "products": ["gaming setup", "esports", "gaming accessories"],
+    "posts": ["gaming news", "esports tips", "game streaming"],
+    "gallery": ["gaming room", "neon gaming", "cyber background"],
+    "logos": ["gaming logo", "esports logo", "minimal gamer logo"]
+  },
+  "gifts": {
+    "products": ["gift box", "gift set", "present packaging"],
+    "posts": ["gift ideas", "celebration", "holiday gifts"],
+    "gallery": ["gift shop", "wrapped gifts", "celebration decor"],
+    "logos": ["gift logo", "present logo", "minimal gift logo"]
+  },
+  "gym": {
+    "products": ["gym equipment", "weights", "fitness accessories"],
+    "posts": ["gym routine", "strength training", "fitness tips"],
+    "gallery": ["gym interior", "workout session", "training"],
+    "logos": ["gym logo", "fitness club logo", "minimal gym logo"]
+  },
+  "hair-salon": {
+    "products": ["hair products", "salon tools", "haircare"],
+    "posts": ["hair tips", "salon trends", "hairstyle"],
+    "gallery": ["hair salon", "hair styling", "beauty salon"],
+    "logos": ["hair salon logo", "beauty salon logo", "minimal hair logo"]
+  },
+  "handicraft": {
+    "products": ["handcrafted product", "artisan crafts", "handmade items"],
+    "posts": ["handmade stories", "craft tips", "artisan"],
+    "gallery": ["craft workshop", "handmade market", "artisan tools"],
+    "logos": ["handmade logo", "artisan logo", "minimal craft logo"]
+  },
+  "healthcare": {
+    "products": ["medical product", "healthcare equipment", "clinic tools"],
+    "posts": ["health tips", "medical advice", "patient care"],
+    "gallery": ["clinic interior", "healthcare team", "medical office"],
+    "logos": ["healthcare logo", "medical logo", "minimal clinic logo"]
+  },
+  "home-furniture": {
+    "products": ["furniture product", "home decor", "sofa product"],
+    "posts": ["interior design", "home styling", "furniture tips"],
+    "gallery": ["living room", "modern interior", "furniture showroom"],
+    "logos": ["furniture logo", "home decor logo", "minimal interior logo"]
+  },
+  "hotel": {
+    "products": ["hotel room", "hotel amenities", "hospitality"],
+    "posts": ["travel tips", "hotel guide", "hospitality news"],
+    "gallery": ["hotel lobby", "resort", "hotel interior"],
+    "logos": ["hotel logo", "resort logo", "minimal hospitality logo"]
+  },
+  "jewelry": {
+    "products": ["jewelry product", "ring product", "necklace"],
+    "posts": ["jewelry tips", "gemstone guide", "luxury style"],
+    "gallery": ["jewelry display", "luxury accessories", "jewelry shop"],
+    "logos": ["jewelry logo", "luxury logo", "minimal jewelry logo"]
+  },
+  "lingerie": {
+    "products": ["lingerie product", "intimate apparel", "sleepwear"],
+    "posts": ["lingerie tips", "style guide", "comfort fashion"],
+    "gallery": ["fashion studio", "fabric texture", "apparel display"],
+    "logos": ["lingerie logo", "apparel logo", "minimal intimate logo"]
+  },
+  "manufacturing": {
+    "products": ["manufacturing equipment", "factory machine", "industrial tools"],
+    "posts": ["manufacturing process", "industry news", "factory"],
+    "gallery": ["factory interior", "production line", "industrial plant"],
+    "logos": ["manufacturing logo", "industry logo", "minimal industrial logo"]
+  },
+  "massage": {
+    "products": ["massage therapy", "spa treatment", "wellness product"],
+    "posts": ["massage benefits", "wellness tips", "relaxation"],
+    "gallery": ["massage room", "spa interior", "wellness"],
+    "logos": ["massage logo", "wellness logo", "minimal spa logo"]
+  },
+  "multi-category": {
+    "products": ["retail products", "shopping items", "grocery products"],
+    "posts": ["shopping tips", "retail news", "market trends"],
+    "gallery": ["supermarket", "retail store", "marketplace"],
+    "logos": ["retail logo", "market logo", "minimal store logo"]
+  },
+  "music-instruments": {
+    "products": ["music instrument", "guitar product", "piano"],
+    "posts": ["music tips", "instrument guide", "music lessons"],
+    "gallery": ["music studio", "band rehearsal", "instrument shop"],
+    "logos": ["music logo", "instrument logo", "minimal music logo"]
+  },
+  "perfume": {
+    "products": ["perfume bottle", "fragrance product", "cosmetic flatlay"],
+    "posts": ["fragrance tips", "perfume guide", "beauty trends"],
+    "gallery": ["perfume display", "luxury cosmetics", "beauty shelf"],
+    "logos": ["perfume logo", "fragrance logo", "minimal perfume logo"]
+  },
+  "pharmacy": {
+    "products": ["pharmacy products", "medicine bottle", "health supplements"],
+    "posts": ["healthcare tips", "pharmacy advice", "wellness guide"],
+    "gallery": ["pharmacy interior", "medical shelf", "healthcare store"],
+    "logos": ["pharmacy logo", "medical logo", "minimal pharmacy logo"]
+  },
+  "real-estate": {
+    "products": ["real estate property", "apartment interior", "house exterior"],
+    "posts": ["real estate tips", "property market", "home buying"],
+    "gallery": ["modern apartment", "real estate office", "building exterior"],
+    "logos": ["real estate logo", "property logo", "minimal realtor logo"]
+  },
+  "restaurant": {
+    "products": ["restaurant dish", "gourmet food", "menu item"],
+    "posts": ["food blog", "chef tips", "restaurant story"],
+    "gallery": ["restaurant interior", "dining table", "food preparation"],
+    "logos": ["restaurant logo", "food logo", "minimal dining logo"]
+  },
+  "seafood": {
+    "products": ["seafood dish", "fresh fish", "seafood market"],
+    "posts": ["seafood recipes", "fishing industry", "marine food"],
+    "gallery": ["seafood display", "fish market", "coastal cuisine"],
+    "logos": ["seafood logo", "fish logo", "minimal ocean logo"]
+  },
+  "stationery": {
+    "products": ["stationery product", "notebook", "office supplies"],
+    "posts": ["study tips", "productivity", "office setup"],
+    "gallery": ["workspace", "desk setup", "office supplies"],
+    "logos": ["stationery logo", "office logo", "minimal paper logo"]
+  },
+  "tech": {
+    "products": ["tech product", "laptop product", "gadgets"],
+    "posts": ["tech news", "startup story", "productivity apps"],
+    "gallery": ["tech workspace", "modern office", "innovation"],
+    "logos": ["tech logo", "startup logo", "minimal technology logo"]
+  },
+  "travel": {
+    "products": ["travel package", "tourism", "vacation planning"],
+    "posts": ["travel tips", "destination guide", "tourism blog"],
+    "gallery": ["travel landscape", "tourist destination", "vacation"],
+    "logos": ["travel logo", "tourism logo", "minimal travel logo"]
+  },
+  "vet": {
+    "products": ["pet care", "veterinary products", "pet accessories"],
+    "posts": ["pet health", "veterinary tips", "animal care"],
+    "gallery": ["vet clinic", "pet grooming", "animal hospital"],
+    "logos": ["vet logo", "pet care logo", "minimal animal logo"]
+  },
+  "yoga": {
+    "products": ["yoga mat", "yoga accessories", "meditation tools"],
+    "posts": ["yoga tips", "mindfulness", "wellness"],
+    "gallery": ["yoga studio", "meditation", "wellness retreat"],
+    "logos": ["yoga logo", "wellness logo", "minimal yoga logo"]
+  }
+}

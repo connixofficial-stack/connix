@@ -1,0 +1,101 @@
+# Implementation Plan
+
+- [x] 1. Viết bug condition exploration test
+  - **Property 1: Fault Condition** - Nút Xóa Bị Disable Khi Items <= 3
+  - **CRITICAL**: Test này PHẢI FAIL trên unfixed code - failure xác nhận bug tồn tại
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: Test này encode expected behavior - sẽ validate fix khi pass sau khi implement
+  - **GOAL**: Tạo counterexamples chứng minh bug tồn tại
+  - **Scoped PBT Approach**: Scope property đến các concrete failing cases (items.length = 1, 2, 3) để đảm bảo reproducibility
+  - Test implementation details từ Fault Condition trong design:
+    - Render ClientsForm với items.length = 3, verify nút xóa có disabled=true
+    - Render ClientsForm với items.length = 2, verify nút xóa có disabled=true
+    - Render ClientsForm với items.length = 1, verify nút xóa có disabled=true
+    - Render ClientsForm với items.length = 3, click nút xóa, verify onRemoveItem KHÔNG được gọi
+  - Test assertions phải match Expected Behavior Properties từ design:
+    - Nút xóa SHOULD được enable (disabled=false hoặc không có thuộc tính disabled)
+    - Callback onRemoveItem SHOULD được gọi khi click nút xóa
+  - Chạy test trên UNFIXED code (app/admin/home-components/clients/_components/ClientsForm.tsx)
+  - **EXPECTED OUTCOME**: Test FAILS (đúng - chứng minh bug tồn tại)
+  - Document counterexamples tìm được để hiểu root cause:
+    - Nút xóa có thuộc tính disabled=true khi items.length <= 3
+    - Callback onRemoveItem không được gọi do nút bị disable
+    - Root cause: logic `disabled={items.length <= minItems}` ở dòng 88
+  - Mark task complete khi test được viết, chạy, và failure được document
+  - _Requirements: 2.1, 2.2, 2.3, 2.4_
+
+- [x] 2. Viết preservation property tests (TRƯỚC KHI implement fix)
+  - **Property 2: Preservation** - Các Chức Năng Khác Không Đổi
+  - **IMPORTANT**: Tuân theo observation-first methodology
+  - Quan sát behavior trên UNFIXED code cho non-buggy inputs:
+    - Xóa logo khi items.length > 3 hoạt động bình thường
+    - Nút Thêm bị disable khi items.length >= maxItems (20)
+    - Nút di chuyển (move left/right) hoạt động đúng
+    - Toggle giữa upload và URL input hoạt động đúng
+    - Upload ảnh và nhập URL hoạt động đúng
+    - Warning message hiển thị khi items.length < minItems
+    - State management và re-rendering hoạt động đúng
+  - Viết property-based tests capture observed behavior patterns từ Preservation Requirements:
+    - Property: Delete với items.length > 3 → nút enabled, onRemoveItem được gọi
+    - Property: Add button disabled khi items.length >= maxItems
+    - Property: Move buttons hoạt động với mọi valid positions
+    - Property: Warning message hiển thị ⟺ items.length < minItems
+    - Property: Toggle input mode không ảnh hưởng state khác
+    - Property: Upload/URL input hoạt động độc lập với số lượng items
+  - Property-based testing generate nhiều test cases cho stronger guarantees
+  - Chạy tests trên UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (xác nhận baseline behavior cần preserve)
+  - Mark task complete khi tests được viết, chạy, và passing trên unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
+
+- [x] 3. Fix cho nút xóa logo bị disable không đúng
+
+  - [x] 3.1 Implement the fix
+    - Mở file `app/admin/home-components/clients/_components/ClientsForm.tsx`
+    - Tìm dòng 88 chứa nút xóa với thuộc tính `disabled={items.length <= minItems}`
+    - Loại bỏ thuộc tính `disabled={items.length <= minItems}` hoàn toàn
+    - Nút xóa sẽ không có thuộc tính disabled (hoặc `disabled={false}` nếu cần rõ ràng)
+    - Giữ nguyên callback `onClick={() => { onRemoveItem(item.id); }}`
+    - Giữ nguyên aria-label và các thuộc tính accessibility khác
+    - Không thay đổi warning message logic ở dòng 195-197
+    - Không xóa prop minItems khỏi interface (vẫn cần cho warning)
+    - _Bug_Condition: isBugCondition(input) where input.items.length <= input.minItems AND input.userAction === 'click_delete' AND deleteButtonIsDisabled(input.items.length, input.minItems)_
+    - _Expected_Behavior: deleteButtonIsEnabled(result) AND onRemoveItemCanBeCalled(result) for all items.length values_
+    - _Preservation: Nút Thêm disabled khi items.length >= maxItems, move buttons hoạt động, toggle input mode hoạt động, upload/URL hoạt động, warning message hiển thị khi items.length < minItems, state management không đổi, UI layout không đổi_
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
+
+  - [x] 3.2 Verify bug condition exploration test bây giờ pass
+    - **Property 1: Expected Behavior** - Nút Xóa Luôn Được Enable
+    - **IMPORTANT**: Re-run CÙNG test từ task 1 - KHÔNG viết test mới
+    - Test từ task 1 encode expected behavior
+    - Khi test này pass, xác nhận expected behavior được thỏa mãn
+    - Chạy bug condition exploration test từ step 1
+    - **EXPECTED OUTCOME**: Test PASSES (xác nhận bug đã được fix)
+    - Verify:
+      - Nút xóa không có thuộc tính disabled khi items.length <= 3
+      - Callback onRemoveItem được gọi khi click nút xóa với bất kỳ số lượng items nào
+      - Có thể xóa xuống còn 0 items mà không gây lỗi
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+
+  - [x] 3.3 Verify preservation tests vẫn pass
+    - **Property 2: Preservation** - Các Chức Năng Khác Không Đổi
+    - **IMPORTANT**: Re-run CÙNG tests từ task 2 - KHÔNG viết tests mới
+    - Chạy preservation property tests từ step 2
+    - **EXPECTED OUTCOME**: Tests PASS (xác nhận không có regressions)
+    - Verify tất cả tests vẫn pass sau fix:
+      - Delete với items.length > 3 hoạt động như cũ
+      - Add button vẫn disabled khi items.length >= maxItems
+      - Move buttons vẫn hoạt động đúng
+      - Warning message vẫn hiển thị khi items.length < minItems
+      - Toggle input mode vẫn hoạt động
+      - Upload/URL input vẫn hoạt động
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
+
+- [x] 4. Checkpoint - Đảm bảo tất cả tests pass
+  - Chạy tất cả tests (exploration + preservation)
+  - Verify không có regressions trong các chức năng khác
+  - Test manually trên UI nếu cần:
+    - Thêm logo → xóa xuống còn 3 → tiếp tục xóa xuống 0 → thêm lại
+    - Verify warning message xuất hiện/biến mất đúng lúc
+    - Verify nút Thêm vẫn bị disable khi đạt maxItems
+  - Hỏi user nếu có câu hỏi phát sinh

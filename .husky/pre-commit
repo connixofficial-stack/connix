@@ -1,0 +1,12 @@
+echo "🚀 [Harness Engine] Đang quét chất lượng code trước khi commit..."
+
+# 1. Chạy linter siêu tốc trên toàn bộ dự án
+echo "⚡ [Oxlint] Đang quét chất lượng code trên toàn bộ dự án..."
+bunx oxlint --type-aware --type-check --fix --deny-warnings || exit 1
+
+
+# 2. Chạy kiểm tra kiểu dữ liệu toàn cục (Invariant check)
+echo "🔍 [TypeScript] Đang typecheck toàn bộ dự án..."
+bun tsc --noEmit || exit 1
+
+echo "✅ [Harness Engine] Đạt tiêu chuẩn! Cho phép commit."

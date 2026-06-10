@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ thống Kỹ năng AI - Antigravity Factory (Tối giản & Light Mode)</title>
+  <!-- Google Fonts: Plus Jakarta Sans cho UI, JetBrains Mono cho code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* LIGHT MODE DESIGN SYSTEM (Clean & Premium style like Linear / Vercel) */
+    :root {
+      --bg-base: #f9fafb;
+      --bg-surface: #ffffff;
+      --bg-surface-secondary: #f4f4f5;
+      --border-color: #e4e4e7;
+      --border-focus: #a1a1aa;
+      
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-muted: #8e8e93;
+      --text-bright: #09090b;
+      
+      --font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      --shadow-lg: 0 10px 30px -10px rgba(0, 0, 0, 0.06), 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+      
+      --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* BASE STYLES */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.03) 0px, transparent 40%),
+        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #d4d4d8;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a1a1aa;
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      flex-grow: 1;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+      margin-bottom: 1rem;
+    }
+
+    .logo-container svg {
+      width: 26px;
+      height: 26px;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text-bright);
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* CONTROLS */
+    .controls-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    @media (min-width: 1024px) {
+      .controls-panel {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex-grow: 1;
+      width: 100%;
+    }
+
+    @media (min-width: 1024px) {
+      .search-wrapper {
+        max-width: 380px;
+      }
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.65rem 1rem 0.65rem 2.5rem;
+      border-radius: 10px;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      transition: var(--transition-smooth);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      background: var(--bg-surface);
+      box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.03);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      width: 16px;
+      height: 16px;
+    }
+
+    .filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .filter-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.825rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .filter-btn:hover {
+      background: var(--bg-surface-secondary);
+      color: var(--text-primary);
+    }
+
+    .filter-btn.active {
+      background: var(--text-bright);
+      border-color: var(--text-bright);
+      color: #ffffff;
+    }
+
+    .skills-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      background: var(--bg-surface-secondary);
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    /* GRID OF CARDS */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 640px) {
+      .skills-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .skills-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .skills-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .skill-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: var(--transition-smooth);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .skill-card:hover {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .skill-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--theme-color, #71717a);
+      border-radius: 14px 14px 0 0;
+      opacity: 0.8;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+      gap: 0.5rem;
+    }
+
+    .card-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      color: var(--theme-color, var(--text-primary));
+    }
+
+    .card-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .category-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      background: rgba(var(--theme-color-rgb), 0.08);
+      color: var(--theme-color);
+      border: 1px solid rgba(var(--theme-color-rgb), 0.15);
+    }
+
+    .card-body {
+      flex-grow: 1;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 0.2rem;
+      line-height: 1.3;
+    }
+
+    .card-subtitle {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .card-desc {
+      font-size: 0.825rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      border: 1px solid var(--border-color);
+      gap: 0.35rem;
+      flex-grow: 1;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+    }
+
+    .btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-secondary);
+      border-color: var(--border-focus);
+    }
+
+    .btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* TOAST SYSTEM */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--text-bright);
+      color: #ffffff;
+      padding: 0.65rem 1.15rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.2s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast svg {
+      color: #10b981;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 2.5rem 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- HEADER -->
+    <header>
+      <div class="logo-container">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      </div>
+      <h1>Hệ thống Kỹ năng AI</h1>
+      <p>Thư mục tra cứu trực quan và tìm kiếm nhanh toàn bộ các kỹ năng (skills) hỗ trợ phát triển hệ thống trong dự án của bạn.</p>
+    </header>
+
+    <!-- SEARCH & FILTERS -->
+    <div class="controls-panel">
+      <div class="search-wrapper">
+        <svg class="search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm skill theo tên, mô tả..." oninput="handleSearch()">
+      </div>
+      
+      <div class="filter-tabs" id="filterTabs">
+        <!-- Tab buttons generated dynamically -->
+      </div>
+      
+      <span class="skills-count" id="skillsCount">Hiển thị: 0/0 skill</span>
+    </div>
+
+    <!-- SKILLS GRID -->
+    <div class="skills-grid" id="skillsGrid">
+      <!-- Cards generated dynamically -->
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Thiết kế bởi <strong>Antigravity AI</strong> • Cho dự án <strong>system_dohy</strong> • 2026</p>
+  </footer>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- DATA & LOGIC SCRIPT (STATIC) -->
+  <script>
+    // Toàn bộ 38 skill được code tĩnh hoàn chỉnh, nhẹ nhàng, không lỗi cú pháp
+    const skillsData = [
+      {
+        "id": "admin-list-boilerplate",
+        "name": "admin-list-boilerplate",
+        "title": "Admin List Boilerplate",
+        "category": "General Utility",
+        "themeColor": "#475569",
+        "themeColorRgb": "71, 85, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/admin-list-boilerplate/SKILL.md",
+        "description": "Chuẩn hóa trang list resource trong /admin theo chuẩn VietAdmin (search, filter, sort, pagination, bulk actions, column toggle, sticky header, empty state, ModuleGuard). Sử dụng khi cần tạo mới hoặc tối ưu trang quản trị danh sách."
+      },
+      {
+        "id": "apply-home-component-custom-colors",
+        "name": "apply-home-component-custom-colors",
+        "title": "Apply Home Component Custom Colors",
+        "category": "Home Component",
+        "themeColor": "#4f46e5",
+        "themeColorRgb": "79, 70, 229",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/apply-home-component-custom-colors/SKILL.md",
+        "description": "Hướng dẫn cấu hình màu sắc tùy chỉnh cho các home component trên trang chủ, đảm bảo tính nhất quán giữa create, edit, preview và thực tế ngoài site."
+      },
+      {
+        "id": "coc-module-system",
+        "name": "coc-module-system",
+        "title": "CoC Module System",
+        "category": "Module Builder",
+        "themeColor": "#9333ea",
+        "themeColorRgb": "147, 51, 234",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/coc-module-system/SKILL.md",
+        "description": "Quy chuẩn cấu trúc hệ thống Module dựa trên nguyên tắc Convention Over Configuration. Quy định cách khai báo, đăng ký và sử dụng các module cốt lõi."
+      },
+      {
+        "id": "composition-patterns",
+        "name": "composition-patterns",
+        "title": "Composition Patterns",
+        "category": "UI/UX & Design",
+        "themeColor": "#e11d48",
+        "themeColorRgb": "225, 29, 72",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="21" y1="12" x2="3" y2="12"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/composition-patterns/SKILL.md",
+        "description": "Các khuôn mẫu lắp ráp component trang, quy hoạch layout và cách tổ chức các khối thành phần UI giúp giao diện linh hoạt, dễ tái sử dụng."
+      },
+      {
+        "id": "convex",
+        "name": "convex",
+        "title": "Convex General Router",
+        "category": "Convex Core",
+        "themeColor": "#2563eb",
+        "themeColorRgb": "37, 99, 235",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex/SKILL.md",
+        "description": "Định tuyến các yêu cầu liên quan đến Convex sang đúng skill chuyên biệt (Setup, Auth, Component, Migration, Performance). Cài đặt Convex AI guidelines."
+      },
+      {
+        "id": "convex-create-component",
+        "name": "convex-create-component",
+        "title": "Convex Create Component",
+        "category": "Convex Component",
+        "themeColor": "#ea580c",
+        "themeColorRgb": "234, 88, 12",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"></polygon><polygon points="12 12 21 6.92 21 17.08 12 22.08"></polygon><polygon points="12 2 3 6.92 12 12 21 6.92 12 2"></polygon></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-create-component/SKILL.md",
+        "description": "Quy trình xây dựng các Convex component độc lập với các bảng dữ liệu riêng và ranh giới API rõ ràng hướng ứng dụng chính."
+      },
+      {
+        "id": "convex-data-contract-audit",
+        "name": "convex-data-contract-audit",
+        "title": "Convex Data Contract Audit",
+        "category": "Convex Data Ops",
+        "themeColor": "#059669",
+        "themeColorRgb": "5, 150, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-data-contract-audit/SKILL.md",
+        "description": "Quét và phát hiện các trường dữ liệu bị thiếu hoặc khuyến nghị cập nhật trong Convex database để thực hiện migration an toàn."
+      },
+      {
+        "id": "convex-migration-helper",
+        "name": "convex-migration-helper",
+        "title": "Convex Migration Helper",
+        "category": "Convex Migration",
+        "themeColor": "#db2777",
+        "themeColorRgb": "219, 39, 119",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-migration-helper/SKILL.md",
+        "description": "Hỗ trợ lập kế hoạch di trú schema và cơ sở dữ liệu Convex theo chu kỳ 3 bước an toàn: Widen -> Migrate -> Narrow."
+      },
+      {
+        "id": "convex-performance-audit",
+        "name": "convex-performance-audit",
+        "title": "Convex Performance Audit",
+        "category": "Convex Performance",
+        "themeColor": "#dc2626",
+        "themeColorRgb": "220, 38, 38",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-performance-audit/SKILL.md",
+        "description": "Chẩn đoán hiệu năng ứng dụng Convex, tối ưu số lượng tài liệu/bytes đọc ghi, giải quyết xung đột OCC và tối ưu hóa chi phí subscription."
+      },
+      {
+        "id": "convex-quickstart",
+        "name": "convex-quickstart",
+        "title": "Convex Quickstart",
+        "category": "Convex Core",
+        "themeColor": "#2563eb",
+        "themeColorRgb": "37, 99, 235",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-quickstart/SKILL.md",
+        "description": "Thiết lập nhanh backend Convex cho dự án mới hoặc tích hợp Convex Client Provider vào ứng dụng frontend React / Next.js sẵn có."
+      },
+      {
+        "id": "convex-real-data-ops",
+        "name": "convex-real-data-ops",
+        "title": "Convex Real Data Ops",
+        "category": "Convex Data Ops",
+        "themeColor": "#059669",
+        "themeColorRgb": "5, 150, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-real-data-ops/SKILL.md",
+        "description": "Quy tắc chỉnh sửa dữ liệu thật (production) an toàn tuyệt đối qua Convex mutation/action có sẵn. Nghiêm cấm sửa mò hoặc thay đổi schema không có lý do."
+      },
+      {
+        "id": "convex-setup-auth",
+        "name": "convex-setup-auth",
+        "title": "Convex Auth Setup",
+        "category": "Convex Auth",
+        "themeColor": "#7c3aed",
+        "themeColorRgb": "124, 58, 237",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/convex-setup-auth/SKILL.md",
+        "description": "Cấu hình xác thực (Convex Auth, Clerk, WorkOS, Auth0) và cách viết hàm kiểm tra token định danh an toàn trên backend."
+      },
+      {
+        "id": "create-home-component",
+        "name": "create-home-component",
+        "title": "Create Home Component",
+        "category": "Home Component",
+        "themeColor": "#4f46e5",
+        "themeColorRgb": "79, 70, 229",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/create-home-component/SKILL.md",
+        "description": "Quy trình thiết lập, đăng ký và cấu hình schema cho một section component mới xuất hiện trên trang chủ."
+      },
+      {
+        "id": "docs-seeker",
+        "name": "docs-seeker",
+        "title": "Docs Seeker",
+        "category": "General Utility",
+        "themeColor": "#475569",
+        "themeColorRgb": "71, 85, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/docs-seeker/SKILL.md",
+        "description": "Công cụ định vị và tìm kiếm nhanh các file tài liệu hướng dẫn kỹ thuật trong hệ thống dự án."
+      },
+      {
+        "id": "dual-brand-color-system",
+        "name": "dual-brand-color-system",
+        "title": "Dual Brand Color System",
+        "category": "UI/UX & Design",
+        "themeColor": "#e11d48",
+        "themeColorRgb": "225, 29, 72",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/dual-brand-color-system/SKILL.md",
+        "description": "Hệ thống quản lý, đồng bộ và hiển thị màu sắc thương hiệu kép (dual brand) trong giao diện người dùng."
+      },
+      {
+        "id": "experience-editor-uiux",
+        "name": "experience-editor-uiux",
+        "title": "Experience Editor UI/UX",
+        "category": "Experience Module",
+        "themeColor": "#0891b2",
+        "themeColorRgb": "8, 145, 178",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/experience-editor-uiux/SKILL.md",
+        "description": "Các chuẩn thiết kế giao diện và quy tắc trải nghiệm người dùng dành riêng cho trình quản lý/biên tập trải nghiệm."
+      },
+      {
+        "id": "experience-module-status",
+        "name": "experience-module-status",
+        "title": "Experience Module Status",
+        "category": "Experience Module",
+        "themeColor": "#0891b2",
+        "themeColorRgb": "8, 145, 178",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/experience-module-status/SKILL.md",
+        "description": "Cơ chế quản lý trạng thái hoạt động, ẩn hiện và vòng đời của các trải nghiệm người dùng trong module."
+      },
+      {
+        "id": "experience-pagination-guide",
+        "name": "experience-pagination-guide",
+        "title": "Experience Pagination Guide",
+        "category": "Experience Module",
+        "themeColor": "#0891b2",
+        "themeColorRgb": "8, 145, 178",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/experience-pagination-guide/SKILL.md",
+        "description": "Hướng dẫn thiết lập phân trang, giới hạn tải và tối ưu băng thông mạng cho module trải nghiệm hệ thống."
+      },
+      {
+        "id": "experience-preview-extractor",
+        "name": "experience-preview-extractor",
+        "title": "Experience Preview Extractor",
+        "category": "Experience Module",
+        "themeColor": "#0891b2",
+        "themeColorRgb": "8, 145, 178",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/experience-preview-extractor/SKILL.md",
+        "description": "Bộ trích xuất và hiển thị dữ liệu preview (xem trước) cho các trải nghiệm đang chỉnh sửa trước khi xuất bản."
+      },
+      {
+        "id": "experience-qa-tester",
+        "name": "experience-qa-tester",
+        "title": "Experience QA Tester",
+        "category": "QA & Testing",
+        "themeColor": "#16a34a",
+        "themeColorRgb": "22, 163, 74",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/experience-qa-tester/SKILL.md",
+        "description": "Quy trình kiểm thử QA chi tiết cho module trải nghiệm hệ thống, đảm bảo không xảy ra regression."
+      },
+      {
+        "id": "experiences-builder",
+        "name": "experiences-builder",
+        "title": "Experiences Builder",
+        "category": "Experience Module",
+        "themeColor": "#0891b2",
+        "themeColorRgb": "8, 145, 178",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/experiences-builder/SKILL.md",
+        "description": "Bộ công cụ dựng cấu trúc và cấu hình các trang trải nghiệm trực quan cho admin và người dùng cuối."
+      },
+      {
+        "id": "file-lifecycle-service",
+        "name": "file-lifecycle-service",
+        "title": "File Lifecycle Service",
+        "category": "General Utility",
+        "themeColor": "#475569",
+        "themeColorRgb": "71, 85, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/file-lifecycle-service/SKILL.md",
+        "description": "Quản lý vòng đời tệp tin tải lên (upload), lưu trữ tạm thời, lưu vĩnh viễn và tự động dọn dẹp để tối ưu đĩa."
+      },
+      {
+        "id": "geo-seo-monolithic",
+        "name": "geo-seo-monolithic",
+        "title": "Geo SEO Monolithic",
+        "category": "SEO & Marketing",
+        "themeColor": "#d97706",
+        "themeColorRgb": "217, 119, 6",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/geo-seo-monolithic/SKILL.md",
+        "description": "Chiến lược và cấu trúc SEO theo vị trí địa lý của ứng dụng monolithic, tối ưu hiển thị địa phương."
+      },
+      {
+        "id": "guest-cart-flow-guard",
+        "name": "guest-cart-flow-guard",
+        "title": "Guest Cart Flow Guard",
+        "category": "General Utility",
+        "themeColor": "#475569",
+        "themeColorRgb": "71, 85, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/guest-cart-flow-guard/SKILL.md",
+        "description": "Hệ thống bảo vệ và đồng bộ giỏ hàng cho người dùng vãng lai trước khi tiến hành đăng nhập / đăng ký thanh toán."
+      },
+      {
+        "id": "home-component-parity-guard",
+        "name": "home-component-parity-guard",
+        "title": "Home Component Parity Guard",
+        "category": "Home Component",
+        "themeColor": "#4f46e5",
+        "themeColorRgb": "79, 70, 229",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/home-component-parity-guard/SKILL.md",
+        "description": "Đảm bảo tính đồng bộ dữ liệu và hiển thị của các home component trên tất cả các trang thuộc trang chủ."
+      },
+      {
+        "id": "macbook-design",
+        "name": "macbook-design",
+        "title": "Macbook Design",
+        "category": "UI/UX & Design",
+        "themeColor": "#e11d48",
+        "themeColorRgb": "225, 29, 72",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="11" rx="2" ry="2"></rect><path d="M2 20h20M5 20v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/macbook-design/SKILL.md",
+        "description": "Các chuẩn và tài nguyên thiết kế UI giả lập khung vỏ thiết bị Macbook nhằm trình diễn sản phẩm."
+      },
+      {
+        "id": "madge-circular-scanner",
+        "name": "madge-circular-scanner",
+        "title": "Madge Circular Scanner",
+        "category": "QA & Testing",
+        "themeColor": "#16a34a",
+        "themeColorRgb": "22, 163, 74",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16.2 7.8l-2 2M12 12m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0M7.8 16.2l2-2"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/madge-circular-scanner/SKILL.md",
+        "description": "Hướng dẫn sử dụng Madge để phát hiện, phân tích và loại bỏ các lỗi import vòng tròn (circular dependency) trong dự án."
+      },
+      {
+        "id": "module-creator",
+        "name": "module-creator",
+        "title": "Module Creator",
+        "category": "Module Builder",
+        "themeColor": "#9333ea",
+        "themeColorRgb": "147, 51, 234",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/module-creator/SKILL.md",
+        "description": "Hướng dẫn chi tiết quy trình khởi tạo, cấu hình và khai báo tích hợp một module chức năng mới trong dự án."
+      },
+      {
+        "id": "module-qa-tester",
+        "name": "module-qa-tester",
+        "title": "Module QA Tester",
+        "category": "QA & Testing",
+        "themeColor": "#16a34a",
+        "themeColorRgb": "22, 163, 74",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/module-qa-tester/SKILL.md",
+        "description": "Các bài kiểm thử tiêu chuẩn và checklist nghiệm thu QA đối với một module mới xây dựng xong."
+      },
+      {
+        "id": "nextjs-seo-guideline",
+        "name": "nextjs-seo-guideline",
+        "title": "NextJS SEO Guideline",
+        "category": "SEO & Marketing",
+        "themeColor": "#d97706",
+        "themeColorRgb": "217, 119, 6",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/nextjs-seo-guideline/SKILL.md",
+        "description": "Quy chuẩn thiết lập thẻ meta, title, semantic HTML5, cấu trúc sitemap và tối ưu hóa SEO trong Next.js App Router."
+      },
+      {
+        "id": "qa-review",
+        "name": "qa-review",
+        "title": "QA Review",
+        "category": "QA & Testing",
+        "themeColor": "#16a34a",
+        "themeColorRgb": "22, 163, 74",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/qa-review/SKILL.md",
+        "description": "Quy trình xem xét tĩnh chất lượng code, kiểm tra tính tương thích ngược của dữ liệu trước khi bàn giao."
+      },
+      {
+        "id": "react-best-practices",
+        "name": "react-best-practices",
+        "title": "React Best Practices",
+        "category": "UI/UX & Design",
+        "themeColor": "#e11d48",
+        "themeColorRgb": "225, 29, 72",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="5" ry="12" transform="rotate(30 12 12)"></ellipse><ellipse cx="12" cy="12" rx="5" ry="12" transform="rotate(90 12 12)"></ellipse><ellipse cx="12" cy="12" rx="5" ry="12" transform="rotate(150 12 12)"></ellipse></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/react-best-practices/SKILL.md",
+        "description": "Các chỉ dẫn viết code React sạch sẽ, tối ưu hiệu năng render hook, tổ chức state hiệu quả."
+      },
+      {
+        "id": "refactor-home-component",
+        "name": "refactor-home-component",
+        "title": "Refactor Home Component",
+        "category": "Home Component",
+        "themeColor": "#4f46e5",
+        "themeColorRgb": "79, 70, 229",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/refactor-home-component/SKILL.md",
+        "description": "Các bước tái cấu trúc code home component nhằm mục tiêu tối ưu hiệu năng và tách rời logic."
+      },
+      {
+        "id": "skill-writer",
+        "name": "skill-writer",
+        "title": "Skill Writer",
+        "category": "General Utility",
+        "themeColor": "#475569",
+        "themeColorRgb": "71, 85, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/skill-writer/SKILL.md",
+        "description": "Hướng dẫn cách viết tài liệu kỹ năng AI (SKILL.md) chuẩn hóa theo định dạng dự án."
+      },
+      {
+        "id": "system-extension-guideline",
+        "name": "system-extension-guideline",
+        "title": "System Extension Guideline",
+        "category": "General Utility",
+        "themeColor": "#475569",
+        "themeColorRgb": "71, 85, 105",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/system-extension-guideline/SKILL.md",
+        "description": "Hướng dẫn các nguyên tắc mở rộng chức năng hệ thống an toàn và đồng bộ cấu hình."
+      },
+      {
+        "id": "uiux-2026-best-practices",
+        "name": "uiux-2026-best-practices",
+        "title": "UI/UX 2026 Best Practices",
+        "category": "UI/UX & Design",
+        "themeColor": "#e11d48",
+        "themeColorRgb": "225, 29, 72",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/uiux-2026-best-practices/SKILL.md",
+        "description": "Các nguyên tắc tối ưu hóa UX (Clarity > Decoration, Text economy, Responsive-first, Accessibility WCAG 2.2 AA)."
+      },
+      {
+        "id": "viet-seo-product-description",
+        "name": "viet-seo-product-description",
+        "title": "Viet SEO Product Description",
+        "category": "SEO & Marketing",
+        "themeColor": "#d97706",
+        "themeColorRgb": "217, 119, 6",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/viet-seo-product-description/SKILL.md",
+        "description": "Các chuẩn và từ khóa vàng để tối ưu hóa SEO cho phần mô tả sản phẩm bằng tiếng Việt."
+      },
+      {
+        "id": "web-design-guidelines",
+        "name": "web-design-guidelines",
+        "title": "Web Design Guidelines",
+        "category": "UI/UX & Design",
+        "themeColor": "#e11d48",
+        "themeColorRgb": "225, 29, 72",
+        "icon": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
+        "path": "e:/NextJS/job/job_from_system_vietadmin/system_dohy/.factory/skills/web-design-guidelines/SKILL.md",
+        "description": "Các chỉ dẫn thiết kế web chuẩn mực về spacing, typography, colors và micro-animations."
+      }
+    ];
+
+    let currentCategory = "All";
+    let searchQuery = "";
+
+    // Show Toast Notification
+    function showToast(message) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="14" height="14">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(5px)';
+        setTimeout(() => toast.remove(), 250);
+      }, 2000);
+    }
+
+    // Copy to clipboard helper
+    function copyText(text, successMsg) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg);
+      }).catch(err => {
+        console.error("Lỗi sao chép: ", err);
+      });
+    }
+
+    // Initialize Category Filter Tabs
+    function initFilters() {
+      const categories = ["All", ...new Set(skillsData.map(s => s.category))];
+      const tabsContainer = document.getElementById('filterTabs');
+      
+      tabsContainer.innerHTML = categories.map(cat => `
+        <button class="filter-btn ${cat === currentCategory ? 'active' : ''}" onclick="filterCategory('${cat}')">
+          ${cat === 'All' ? 'Tất cả' : cat}
+        </button>
+      `).join('');
+    }
+
+    // Filter Category Click
+    function filterCategory(category) {
+      currentCategory = category;
+      initFilters();
+      renderCards();
+    }
+
+    // Search Input Handler
+    function handleSearch() {
+      searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      renderCards();
+    }
+
+    // Render Cards Grid
+    function renderCards() {
+      const grid = document.getElementById('skillsGrid');
+      
+      const filtered = skillsData.filter(skill => {
+        const matchesCategory = currentCategory === "All" || skill.category === currentCategory;
+        const matchesSearch = skill.name.toLowerCase().includes(searchQuery) || 
+                              skill.title.toLowerCase().includes(searchQuery) ||
+                              skill.description.toLowerCase().includes(searchQuery);
+        return matchesCategory && matchesSearch;
+      });
+
+      document.getElementById('skillsCount').innerText = `Hiển thị: ${filtered.length}/${skillsData.length} skill`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; display: block; opacity: 0.5;">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">Không tìm thấy kết quả</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Hãy thử tìm kiếm với các từ khóa hoặc nhóm danh mục khác.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(skill => `
+        <div class="skill-card" 
+             style="--theme-color: ${skill.themeColor}; --theme-color-rgb: ${skill.themeColorRgb};">
+          <div>
+            <div class="card-header">
+              <div class="card-icon">
+                ${skill.icon}
+              </div>
+              <span class="category-badge">${skill.category}</span>
+            </div>
+            
+            <div class="card-body">
+              <h3 class="card-title">${skill.title}</h3>
+              <p class="card-subtitle">${skill.name}</p>
+              <p class="card-desc">${skill.description}</p>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <button class="btn" onclick="copyText('${skill.name}', 'Đã copy tên: ${skill.name}')" title="Copy tên định danh skill">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+              Copy tên
+            </button>
+            <button class="btn" onclick="copyText('${skill.path}', 'Đã copy đường dẫn file SKILL.md!')" title="Copy đường dẫn file SKILL.md">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+              Copy path IDE
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Run Init
+    initFilters();
+    renderCards();
+  </script>
+</body>
+</html>

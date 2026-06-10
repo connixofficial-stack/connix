@@ -1,0 +1,448 @@
+export type HomepageIndustry = {
+  key: string;
+  name: string;
+  description: string;
+  heroHeading: string;
+  heroDescription: string;
+  ctaTitle: string;
+  ctaDescription: string;
+  ctaButton: string;
+  aboutHeading: string;
+  aboutContent: string;
+  productTitle: string;
+  productSubtitle: string;
+  contactHeading: string;
+  contactSubheading: string;
+  heroImage: string;
+  benefits: Array<{ title: string; description: string; icon?: string }>;
+  services: Array<{ title: string; description: string; icon?: string }>;
+  testimonials: Array<{ name: string; role: string; content: string }>;
+  faqs: Array<{ question: string; answer: string }>;
+  stats: Array<{ label: string; value: string }>;
+};
+
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600';
+
+export const HOMEPAGE_INDUSTRIES: HomepageIndustry[] = [
+  {
+    key: 'spa',
+    name: 'Spa',
+    description: 'Liệu trình thư giãn, chăm sóc da chuyên sâu.',
+    heroHeading: 'Spa thư giãn chuẩn chuyên gia',
+    heroDescription: 'Liệu trình cá nhân hóa, không gian riêng tư và chăm sóc tận tâm.',
+    ctaTitle: 'Sẵn sàng đặt lịch spa?',
+    ctaDescription: 'Nhận tư vấn liệu trình phù hợp ngay hôm nay.',
+    ctaButton: 'Đặt lịch ngay',
+    aboutHeading: 'Về Spa',
+    aboutContent: 'Chúng tôi tập trung trải nghiệm thư giãn toàn diện và an toàn cho làn da.',
+    productTitle: 'Combo nổi bật',
+    productSubtitle: 'Ưu đãi trong tuần',
+    contactHeading: 'Liên hệ Spa',
+    contactSubheading: 'Đội ngũ hỗ trợ 24/7',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Chuyên viên giàu kinh nghiệm', description: 'Đội ngũ được đào tạo bài bản.' },
+      { title: 'Liệu trình cá nhân hóa', description: 'Phù hợp từng loại da và nhu cầu.' },
+      { title: 'Sản phẩm chính hãng', description: 'Cam kết chất lượng & an toàn.' },
+      { title: 'Không gian thư giãn', description: 'Thiết kế riêng tư, yên tĩnh.' },
+    ],
+    services: [
+      { title: 'Chăm sóc da chuyên sâu', description: 'Liệu trình phục hồi và trẻ hóa.' },
+      { title: 'Massage thư giãn', description: 'Giải tỏa căng thẳng, cân bằng cơ thể.' },
+      { title: 'Chăm sóc body', description: 'Tăng độ săn chắc và mịn màng.' },
+    ],
+    testimonials: [
+      { name: 'Chị Lan', role: 'Khách hàng', content: 'Không gian rất thư giãn, liệu trình rõ ràng.' },
+      { name: 'Anh Minh', role: 'Khách hàng', content: 'Dịch vụ chuyên nghiệp, tư vấn tận tâm.' },
+    ],
+    faqs: [
+      { question: 'Có cần đặt lịch trước không?', answer: 'Nên đặt lịch để giữ khung giờ phù hợp.' },
+      { question: 'Liệu trình phù hợp da nhạy cảm?', answer: 'Có, chúng tôi có gói riêng cho da nhạy cảm.' },
+    ],
+    stats: [
+      { label: 'Khách hàng', value: '1.2k+' },
+      { label: 'Đánh giá', value: '4.9/5' },
+      { label: 'Chuyên viên', value: '12+' },
+      { label: 'Năm kinh nghiệm', value: '8+' },
+    ],
+  },
+  {
+    key: 'beauty',
+    name: 'Làm đẹp',
+    description: 'Giải pháp làm đẹp toàn diện cho làn da khỏe.',
+    heroHeading: 'Chuẩn làm đẹp hiện đại',
+    heroDescription: 'Lộ trình chăm sóc da và tư vấn chuyên sâu theo nhu cầu.',
+    ctaTitle: 'Nhận tư vấn làm đẹp',
+    ctaDescription: 'Gợi ý giải pháp tối ưu cho từng loại da.',
+    ctaButton: 'Tư vấn ngay',
+    aboutHeading: 'Về thương hiệu',
+    aboutContent: 'Chúng tôi cam kết đồng hành cùng bạn trên hành trình làm đẹp an toàn.',
+    productTitle: 'Gói làm đẹp',
+    productSubtitle: 'Chọn liệu trình phù hợp',
+    contactHeading: 'Liên hệ làm đẹp',
+    contactSubheading: 'Luôn sẵn sàng hỗ trợ',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Tư vấn cá nhân hóa', description: 'Theo dõi tiến trình rõ ràng.' },
+      { title: 'Công nghệ hiện đại', description: 'Ứng dụng công nghệ chuẩn y khoa.' },
+      { title: 'Hiệu quả bền vững', description: 'Giải pháp tối ưu dài hạn.' },
+      { title: 'Đội ngũ giàu kinh nghiệm', description: 'Chuyên viên được chứng nhận.' },
+    ],
+    services: [
+      { title: 'Tư vấn da chuyên sâu', description: 'Phân tích và xây dựng routine.' },
+      { title: 'Liệu trình trẻ hóa', description: 'Làm mờ nếp nhăn, nâng cơ.' },
+      { title: 'Chăm sóc cấp tốc', description: 'Phục hồi da nhanh chóng.' },
+    ],
+    testimonials: [
+      { name: 'Hà My', role: 'Khách hàng', content: 'Da cải thiện rõ rệt sau 1 liệu trình.' },
+      { name: 'Ngọc Anh', role: 'Khách hàng', content: 'Tư vấn rất kỹ và phù hợp.' },
+    ],
+    faqs: [
+      { question: 'Bao lâu thấy hiệu quả?', answer: 'Tùy tình trạng da, thường sau 2-4 tuần.' },
+      { question: 'Có tư vấn miễn phí không?', answer: 'Có, tư vấn ban đầu hoàn toàn miễn phí.' },
+    ],
+    stats: [
+      { label: 'Liệu trình', value: '30+' },
+      { label: 'Khách hàng', value: '2k+' },
+      { label: 'Đánh giá tốt', value: '98%' },
+      { label: 'Chuyên gia', value: '15+' },
+    ],
+  },
+  {
+    key: 'dental',
+    name: 'Nha khoa',
+    description: 'Chăm sóc răng miệng toàn diện với bác sĩ chuyên khoa.',
+    heroHeading: 'Nha khoa uy tín chuẩn y khoa',
+    heroDescription: 'Chỉnh nha, thẩm mỹ và chăm sóc răng miệng theo lộ trình cá nhân.',
+    ctaTitle: 'Đặt lịch khám răng',
+    ctaDescription: 'Nhận tư vấn từ bác sĩ chuyên khoa ngay.',
+    ctaButton: 'Đặt lịch khám',
+    aboutHeading: 'Về phòng khám',
+    aboutContent: 'Chúng tôi tập trung vào an toàn, chính xác và trải nghiệm nhẹ nhàng.',
+    productTitle: 'Gói dịch vụ nổi bật',
+    productSubtitle: 'Giải pháp chăm sóc răng',
+    contactHeading: 'Liên hệ nha khoa',
+    contactSubheading: 'Tư vấn nhanh trong ngày',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Bác sĩ chuyên khoa', description: 'Giàu kinh nghiệm và tận tâm.' },
+      { title: 'Trang thiết bị hiện đại', description: 'Đảm bảo chính xác và an toàn.' },
+      { title: 'Quy trình vô khuẩn', description: 'An toàn tuyệt đối.' },
+      { title: 'Theo dõi sau điều trị', description: 'Đồng hành lâu dài.' },
+    ],
+    services: [
+      { title: 'Khám tổng quát', description: 'Kiểm tra và tư vấn tình trạng răng.' },
+      { title: 'Chỉnh nha', description: 'Lộ trình niềng răng rõ ràng.' },
+      { title: 'Thẩm mỹ răng', description: 'Tẩy trắng, dán sứ thẩm mỹ.' },
+    ],
+    testimonials: [
+      { name: 'Anh Dũng', role: 'Khách hàng', content: 'Bác sĩ tư vấn kỹ, nhẹ nhàng.' },
+      { name: 'Chị Thảo', role: 'Khách hàng', content: 'Niềng răng rất ổn, theo dõi sát.' },
+    ],
+    faqs: [
+      { question: 'Niềng răng mất bao lâu?', answer: 'Trung bình 12-24 tháng tùy tình trạng.' },
+      { question: 'Có hỗ trợ trả góp?', answer: 'Có, hỗ trợ nhiều phương án thanh toán.' },
+    ],
+    stats: [
+      { label: 'Ca chỉnh nha', value: '1.5k+' },
+      { label: 'Bác sĩ', value: '10+' },
+      { label: 'Đánh giá', value: '4.9/5' },
+      { label: 'Năm kinh nghiệm', value: '12+' },
+    ],
+  },
+  {
+    key: 'aesthetic',
+    name: 'Thẩm mỹ',
+    description: 'Dịch vụ thẩm mỹ an toàn với công nghệ hiện đại.',
+    heroHeading: 'Thẩm mỹ an toàn, kết quả tự nhiên',
+    heroDescription: 'Lộ trình nâng cấp nhan sắc khoa học và cá nhân hóa.',
+    ctaTitle: 'Nhận tư vấn thẩm mỹ',
+    ctaDescription: 'Chuyên gia hỗ trợ chọn giải pháp phù hợp.',
+    ctaButton: 'Tư vấn ngay',
+    aboutHeading: 'Về trung tâm',
+    aboutContent: 'Ứng dụng công nghệ mới để tối ưu hiệu quả và an toàn.',
+    productTitle: 'Gói thẩm mỹ',
+    productSubtitle: 'Giải pháp theo nhu cầu',
+    contactHeading: 'Liên hệ thẩm mỹ',
+    contactSubheading: 'Tư vấn riêng tư',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Bác sĩ thẩm mỹ', description: 'Chuyên môn cao, quy trình an toàn.' },
+      { title: 'Công nghệ mới', description: 'Thiết bị hiện đại nhất.' },
+      { title: 'Kết quả tự nhiên', description: 'Định hướng thẩm mỹ bền vững.' },
+      { title: 'Chăm sóc hậu thủ thuật', description: 'Theo dõi sát sao.' },
+    ],
+    services: [
+      { title: 'Trẻ hóa da', description: 'Nâng cơ, căng da công nghệ mới.' },
+      { title: 'Điều trị sẹo', description: 'Cải thiện kết cấu da rõ rệt.' },
+      { title: 'Thẩm mỹ không xâm lấn', description: 'Nhanh hồi phục.' },
+    ],
+    testimonials: [
+      { name: 'Chị Mai', role: 'Khách hàng', content: 'Hiệu quả rõ rệt và rất an tâm.' },
+      { name: 'Anh Hưng', role: 'Khách hàng', content: 'Bác sĩ tư vấn cẩn thận.' },
+    ],
+    faqs: [
+      { question: 'Thời gian hồi phục bao lâu?', answer: 'Tuỳ dịch vụ, thường 3-7 ngày.' },
+      { question: 'Có bảo hành kết quả không?', answer: 'Có chính sách hỗ trợ hậu chăm sóc.' },
+    ],
+    stats: [
+      { label: 'Ca thẩm mỹ', value: '900+' },
+      { label: 'Chuyên gia', value: '8+' },
+      { label: 'Đánh giá', value: '4.8/5' },
+      { label: 'Khách hàng quay lại', value: '85%' },
+    ],
+  },
+  {
+    key: 'real-estate',
+    name: 'Bất động sản',
+    description: 'Giải pháp đầu tư và mua bán bất động sản hiệu quả.',
+    heroHeading: 'Bất động sản minh bạch, sinh lời bền vững',
+    heroDescription: 'Nguồn hàng chọn lọc, hỗ trợ pháp lý trọn gói.',
+    ctaTitle: 'Nhận tư vấn dự án',
+    ctaDescription: 'Đội ngũ chuyên gia sẵn sàng hỗ trợ.',
+    ctaButton: 'Tư vấn dự án',
+    aboutHeading: 'Về công ty',
+    aboutContent: 'Chúng tôi đồng hành cùng nhà đầu tư với dữ liệu minh bạch.',
+    productTitle: 'Dự án nổi bật',
+    productSubtitle: 'Cơ hội đầu tư',
+    contactHeading: 'Liên hệ tư vấn',
+    contactSubheading: 'Hỗ trợ pháp lý nhanh',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Nguồn hàng chọn lọc', description: 'Sản phẩm có pháp lý rõ ràng.' },
+      { title: 'Tư vấn đầu tư', description: 'Phân tích dòng tiền hiệu quả.' },
+      { title: 'Hỗ trợ pháp lý', description: 'Đồng hành xuyên suốt giao dịch.' },
+      { title: 'Chăm sóc hậu mãi', description: 'Theo dõi giá trị dài hạn.' },
+    ],
+    services: [
+      { title: 'Tư vấn đầu tư', description: 'Chiến lược phù hợp từng khách hàng.' },
+      { title: 'Mua bán - ký gửi', description: 'Quy trình minh bạch.' },
+      { title: 'Hỗ trợ pháp lý', description: 'Kiểm tra và hoàn thiện hồ sơ.' },
+    ],
+    testimonials: [
+      { name: 'Anh Tuấn', role: 'Nhà đầu tư', content: 'Tư vấn chi tiết, dự án tiềm năng.' },
+      { name: 'Chị Hoa', role: 'Khách hàng', content: 'Pháp lý rõ ràng, hỗ trợ nhiệt tình.' },
+    ],
+    faqs: [
+      { question: 'Có hỗ trợ vay ngân hàng?', answer: 'Có, hỗ trợ hồ sơ vay nhanh.' },
+      { question: 'Tỷ suất lợi nhuận ra sao?', answer: 'Tùy dự án, sẽ tư vấn cụ thể.' },
+    ],
+    stats: [
+      { label: 'Dự án', value: '120+' },
+      { label: 'Giao dịch', value: '2k+' },
+      { label: 'Đối tác', value: '60+' },
+      { label: 'Tỷ lệ hài lòng', value: '96%' },
+    ],
+  },
+  {
+    key: 'appliances',
+    name: 'Gia dụng',
+    description: 'Thiết bị gia dụng tiện nghi cho tổ ấm hiện đại.',
+    heroHeading: 'Gia dụng thông minh cho ngôi nhà mới',
+    heroDescription: 'Tối ưu tiện nghi, tiết kiệm thời gian mỗi ngày.',
+    ctaTitle: 'Khám phá gia dụng',
+    ctaDescription: 'Chọn thiết bị phù hợp cho gia đình.',
+    ctaButton: 'Xem sản phẩm',
+    aboutHeading: 'Về thương hiệu',
+    aboutContent: 'Cung cấp thiết bị gia dụng chính hãng và bảo hành dài hạn.',
+    productTitle: 'Thiết bị nổi bật',
+    productSubtitle: 'Tiện nghi gia đình',
+    contactHeading: 'Liên hệ gia dụng',
+    contactSubheading: 'Tư vấn chọn thiết bị',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Chính hãng 100%', description: 'Đầy đủ giấy tờ và bảo hành.' },
+      { title: 'Tiết kiệm điện', description: 'Công nghệ tiết kiệm năng lượng.' },
+      { title: 'Giao hàng nhanh', description: 'Lắp đặt trong ngày.' },
+      { title: 'Hỗ trợ kỹ thuật', description: 'Tư vấn & bảo trì định kỳ.' },
+    ],
+    services: [
+      { title: 'Tư vấn thiết bị', description: 'Chọn đúng nhu cầu sử dụng.' },
+      { title: 'Lắp đặt tận nơi', description: 'Nhanh chóng, gọn gàng.' },
+      { title: 'Bảo trì định kỳ', description: 'Gia tăng tuổi thọ thiết bị.' },
+    ],
+    testimonials: [
+      { name: 'Anh Long', role: 'Khách hàng', content: 'Thiết bị chạy êm, giao hàng nhanh.' },
+      { name: 'Chị Hương', role: 'Khách hàng', content: 'Tư vấn rất chi tiết, giá hợp lý.' },
+    ],
+    faqs: [
+      { question: 'Bảo hành bao lâu?', answer: 'Từ 12-24 tháng tuỳ sản phẩm.' },
+      { question: 'Có hỗ trợ trả góp?', answer: 'Có, nhiều lựa chọn thanh toán.' },
+    ],
+    stats: [
+      { label: 'Sản phẩm', value: '400+' },
+      { label: 'Bảo hành', value: '24 tháng' },
+      { label: 'Đánh giá', value: '4.8/5' },
+      { label: 'Khách hàng', value: '3k+' },
+    ],
+  },
+  {
+    key: 'furniture',
+    name: 'Nội thất',
+    description: 'Giải pháp nội thất tinh tế cho không gian sống.',
+    heroHeading: 'Nội thất tinh tế, chuẩn gu',
+    heroDescription: 'Thiết kế tối ưu không gian và cảm hứng sống.',
+    ctaTitle: 'Tư vấn nội thất',
+    ctaDescription: 'Nhận đề xuất thiết kế phù hợp.',
+    ctaButton: 'Nhận tư vấn',
+    aboutHeading: 'Về nội thất',
+    aboutContent: 'Đội ngũ thiết kế đồng hành từ ý tưởng đến thi công.',
+    productTitle: 'Bộ sưu tập nội thất',
+    productSubtitle: 'Không gian sống',
+    contactHeading: 'Liên hệ nội thất',
+    contactSubheading: 'Hỗ trợ thiết kế nhanh',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Thiết kế cá nhân hóa', description: 'Phù hợp phong cách từng gia đình.' },
+      { title: 'Chất liệu bền đẹp', description: 'Chọn lọc kỹ lưỡng.' },
+      { title: 'Thi công trọn gói', description: 'Đồng bộ và tối ưu chi phí.' },
+      { title: 'Bảo hành dài hạn', description: 'Yên tâm sử dụng.' },
+    ],
+    services: [
+      { title: 'Thiết kế 3D', description: 'Hình dung rõ trước thi công.' },
+      { title: 'Thi công nội thất', description: 'Đội ngũ giàu kinh nghiệm.' },
+      { title: 'Tư vấn phong cách', description: 'Chọn tone màu phù hợp.' },
+    ],
+    testimonials: [
+      { name: 'Chị Linh', role: 'Khách hàng', content: 'Thiết kế đẹp, thi công đúng tiến độ.' },
+      { name: 'Anh Quang', role: 'Khách hàng', content: 'Chất liệu tốt, tư vấn nhiệt tình.' },
+    ],
+    faqs: [
+      { question: 'Thời gian thi công?', answer: 'Tùy dự án, trung bình 2-4 tuần.' },
+      { question: 'Có khảo sát miễn phí?', answer: 'Có, đội ngũ đến tận nơi khảo sát.' },
+    ],
+    stats: [
+      { label: 'Dự án', value: '350+' },
+      { label: 'Thiết kế', value: '120+' },
+      { label: 'Khách hàng', value: '2.5k+' },
+      { label: 'Đánh giá', value: '4.9/5' },
+    ],
+  },
+  {
+    key: 'restaurant',
+    name: 'Nhà hàng',
+    description: 'Thực đơn hấp dẫn, trải nghiệm ẩm thực trọn vẹn.',
+    heroHeading: 'Nhà hàng chuẩn vị, phục vụ tận tâm',
+    heroDescription: 'Thực đơn chọn lọc, không gian ấm cúng.',
+    ctaTitle: 'Đặt bàn ngay',
+    ctaDescription: 'Giữ chỗ nhanh để có trải nghiệm tốt nhất.',
+    ctaButton: 'Đặt bàn',
+    aboutHeading: 'Về nhà hàng',
+    aboutContent: 'Chúng tôi mang đến trải nghiệm ẩm thực tinh tế mỗi ngày.',
+    productTitle: 'Món nổi bật',
+    productSubtitle: 'Thực đơn đặc sắc',
+    contactHeading: 'Liên hệ đặt bàn',
+    contactSubheading: 'Hỗ trợ 24/7',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Nguyên liệu tươi', description: 'Nguồn nguyên liệu chất lượng.' },
+      { title: 'Đầu bếp chuyên nghiệp', description: 'Kinh nghiệm lâu năm.' },
+      { title: 'Không gian ấm cúng', description: 'Phù hợp gia đình và hội họp.' },
+      { title: 'Phục vụ tận tâm', description: 'Luôn sẵn sàng hỗ trợ.' },
+    ],
+    services: [
+      { title: 'Đặt bàn nhanh', description: 'Chọn khung giờ linh hoạt.' },
+      { title: 'Tiệc riêng', description: 'Setup theo yêu cầu.' },
+      { title: 'Giao món tận nơi', description: 'Đóng gói chuẩn nhà hàng.' },
+    ],
+    testimonials: [
+      { name: 'Anh Nam', role: 'Khách hàng', content: 'Món ăn rất ngon, phục vụ chu đáo.' },
+      { name: 'Chị Hạnh', role: 'Khách hàng', content: 'Không gian ấm cúng, món đa dạng.' },
+    ],
+    faqs: [
+      { question: 'Có phòng riêng không?', answer: 'Có phòng riêng cho nhóm 8-20 người.' },
+      { question: 'Có giao hàng?', answer: 'Có, đặt món qua hotline hoặc website.' },
+    ],
+    stats: [
+      { label: 'Món ăn', value: '120+' },
+      { label: 'Đánh giá', value: '4.8/5' },
+      { label: 'Khách hàng', value: '5k+' },
+      { label: 'Đầu bếp', value: '20+' },
+    ],
+  },
+  {
+    key: 'cafe',
+    name: 'Quán cafe',
+    description: 'Không gian chill, cà phê chất và menu đa dạng.',
+    heroHeading: 'Cafe chill, hương vị riêng',
+    heroDescription: 'Menu đa dạng, không gian làm việc và thư giãn.',
+    ctaTitle: 'Đặt bàn cafe',
+    ctaDescription: 'Giữ chỗ đẹp, tận hưởng thời gian riêng.',
+    ctaButton: 'Đặt bàn',
+    aboutHeading: 'Về quán cafe',
+    aboutContent: 'Chúng tôi chọn lọc hạt cà phê và trải nghiệm khách hàng.',
+    productTitle: 'Menu nổi bật',
+    productSubtitle: 'Cà phê & bánh',
+    contactHeading: 'Liên hệ quán cafe',
+    contactSubheading: 'Đặt bàn nhanh',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Hạt cà phê chọn lọc', description: 'Rang xay tươi mỗi ngày.' },
+      { title: 'Không gian chill', description: 'Phù hợp làm việc và gặp gỡ.' },
+      { title: 'Menu đa dạng', description: 'Cafe, trà, bánh ngọt.' },
+      { title: 'Barista chuyên nghiệp', description: 'Pha chế chuẩn vị.' },
+    ],
+    services: [
+      { title: 'Takeaway nhanh', description: 'Đặt trước, lấy ngay.' },
+      { title: 'Đặt chỗ', description: 'Giữ bàn cho nhóm nhỏ.' },
+      { title: 'Sự kiện nhỏ', description: 'Không gian workshop.' },
+    ],
+    testimonials: [
+      { name: 'Bạn Hưng', role: 'Khách hàng', content: 'Cafe ngon, không gian đẹp.' },
+      { name: 'Bạn Mai', role: 'Khách hàng', content: 'Nhân viên thân thiện, menu đa dạng.' },
+    ],
+    faqs: [
+      { question: 'Có wifi miễn phí?', answer: 'Có, wifi tốc độ cao.' },
+      { question: 'Có phòng họp nhỏ không?', answer: 'Có khu vực yên tĩnh cho nhóm nhỏ.' },
+    ],
+    stats: [
+      { label: 'Loại đồ uống', value: '45+' },
+      { label: 'Khách hàng', value: '4k+' },
+      { label: 'Đánh giá', value: '4.7/5' },
+      { label: 'Chi nhánh', value: '3' },
+    ],
+  },
+  {
+    key: 'clinic',
+    name: 'Phòng khám tư',
+    description: 'Dịch vụ khám chữa bệnh tận tâm, theo dõi sức khỏe chủ động.',
+    heroHeading: 'Phòng khám tư uy tín',
+    heroDescription: 'Bác sĩ chuyên khoa, quy trình rõ ràng và hỗ trợ tận tâm.',
+    ctaTitle: 'Đặt lịch khám',
+    ctaDescription: 'Nhận tư vấn chuyên khoa nhanh.',
+    ctaButton: 'Đặt lịch',
+    aboutHeading: 'Về phòng khám',
+    aboutContent: 'Cam kết chẩn đoán chính xác và đồng hành lâu dài.',
+    productTitle: 'Gói khám',
+    productSubtitle: 'Chăm sóc sức khỏe',
+    contactHeading: 'Liên hệ phòng khám',
+    contactSubheading: 'Hỗ trợ đặt lịch',
+    heroImage: HERO_IMAGE,
+    benefits: [
+      { title: 'Bác sĩ chuyên khoa', description: 'Giàu kinh nghiệm và tận tâm.' },
+      { title: 'Chẩn đoán chính xác', description: 'Thiết bị hỗ trợ hiện đại.' },
+      { title: 'Theo dõi dài hạn', description: 'Nhắc lịch tái khám.' },
+      { title: 'Dịch vụ linh hoạt', description: 'Đặt lịch dễ dàng.' },
+    ],
+    services: [
+      { title: 'Khám tổng quát', description: 'Đánh giá sức khỏe toàn diện.' },
+      { title: 'Tư vấn chuyên khoa', description: 'Lộ trình điều trị rõ ràng.' },
+      { title: 'Xét nghiệm', description: 'Hỗ trợ chẩn đoán nhanh.' },
+    ],
+    testimonials: [
+      { name: 'Anh Đức', role: 'Bệnh nhân', content: 'Bác sĩ tư vấn kỹ và nhẹ nhàng.' },
+      { name: 'Chị Nga', role: 'Bệnh nhân', content: 'Quy trình rõ ràng, hỗ trợ chu đáo.' },
+    ],
+    faqs: [
+      { question: 'Có khám ngoài giờ không?', answer: 'Có, phòng khám mở đến 20h.' },
+      { question: 'Có hỗ trợ xét nghiệm không?', answer: 'Có, xét nghiệm nhanh trong ngày.' },
+    ],
+    stats: [
+      { label: 'Bác sĩ', value: '20+' },
+      { label: 'Ca khám', value: '10k+' },
+      { label: 'Đánh giá', value: '4.9/5' },
+      { label: 'Năm hoạt động', value: '15+' },
+    ],
+  },
+];

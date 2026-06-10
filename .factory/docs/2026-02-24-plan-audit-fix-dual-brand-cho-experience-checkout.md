@@ -1,0 +1,9 @@
+## Plan ngắn gọn
+1. **Khoanh scope checkout**: tìm toàn bộ file của `system/experiences/checkout` và site render checkout tương ứng, xác định đường đi dữ liệu màu (settings → preview/site).
+2. **Audit đầy đủ theo skill**: liệt kê tất cả vi phạm trong checkout gồm hardcode màu, inline `brandColor`, opacity decor, thiếu token semantic, thiếu sync `primary/secondary/mode`, và mismatch preview vs site.
+3. **Thiết kế token màu tập trung**: tạo/chuẩn hóa `getCheckoutColors(primary, secondary, mode)` trong `_lib/colors.ts` theo OKLCH + APCA + resolveSecondary theo mode (single=monochromatic, dual=fallback hợp lệ), kèm token cho heading/body/badge/button/input/border/surface/state.
+4. **Refactor Preview dùng token**: thay mọi màu hardcode/inline trong experience checkout preview bằng token từ `getCheckoutColors`; đảm bảo 60-30-10 ở content state và APCA guard cho text/icon trên nền solid.
+5. **Refactor Site render dùng cùng token**: tại route site checkout, generate tokens bằng **chính** `getCheckoutColors` và truyền xuống các layout/section checkout; thay toàn bộ màu liên quan checkout sang token để đồng bộ tuyệt đối preview/site.
+6. **Xử lý opacity decor theo yêu cầu của bạn**: ưu tiên loại bỏ opacity decorative theo skill; nhưng các điểm “ảnh hưởng thị giác lớn” sẽ giữ mức tối thiểu có kiểm soát và ghi rõ trong báo cáo audit còn lại.
+7. **Tự rà soát lần cuối + fix nốt**: quét lại toàn bộ checkout để chắc không còn thiếu token/sai mode/sai secondary/mismatch preview-site trong phạm vi checkout.
+8. **Validate + commit**: chạy `bunx tsc --noEmit`; nếu pass thì commit với message: `fix(checkout): apply dual-brand color tokens for preview + site` (không push).

@@ -43,7 +43,7 @@ const CATEGORY_RUNTIME_DEFINITIONS: RuntimeModuleDefinition[] = [
       { enabled: true, fieldKey: 'slug', isSystem: true, name: 'Slug', order: 1, required: true, type: 'text' },
       { enabled: true, fieldKey: 'order', isSystem: true, name: 'Thứ tự', order: 2, required: true, type: 'number' },
       { enabled: true, fieldKey: 'active', isSystem: true, name: 'Trạng thái', order: 3, required: true, type: 'boolean' },
-      { enabled: true, fieldKey: 'description', isSystem: false, name: 'Mô tả', order: 4, required: false, type: 'textarea' },
+      { enabled: false, fieldKey: 'description', isSystem: false, name: 'Mô tả', order: 4, required: false, type: 'textarea' },
       { enabled: false, fieldKey: 'image', isSystem: false, name: 'Hình ảnh', order: 5, required: false, type: 'image' },
       { enabled: false, fieldKey: 'filterFooterContent', isSystem: false, linkedFeature: 'enableCategoryFilterFooterContent', name: 'Nội dung cuối danh mục', order: 6, required: false, type: 'richtext' },
       { enabled: false, fieldKey: 'productDetailSuffixContent', isSystem: false, linkedFeature: 'enableCategoryProductDetailSuffix', name: 'Nội dung nối đuôi sản phẩm', order: 7, required: false, type: 'richtext' },

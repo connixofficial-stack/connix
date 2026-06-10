@@ -59,6 +59,7 @@ interface InlineMatrixBuilderProps {
   initialSelections?: VariantOptionSelection[];
   initialVariants?: VariantRow[];
   onChange: (selections: VariantOptionSelection[], variants: VariantRow[]) => void;
+  showPricing?: boolean;
 }
 
 const buildVariantKey = (optionValues: VariantRow["optionValues"]) =>
@@ -119,6 +120,7 @@ export function InlineMatrixBuilder({
   initialSelections = [],
   initialVariants = [],
   onChange,
+  showPricing = true,
 }: InlineMatrixBuilderProps) {
   const [selections, setSelections] = useState<VariantOptionSelection[]>(initialSelections);
   const [variants, setVariants] = useState<VariantRow[]>(initialVariants);
@@ -415,8 +417,12 @@ export function InlineMatrixBuilder({
                       </Button>
                     </div>
                   </TableHead>
-                  <TableHead className="w-[150px]">Giá bán</TableHead>
-                  <TableHead className="w-[150px]">Giá trước giảm</TableHead>
+                  {showPricing && (
+                    <>
+                      <TableHead className="w-[150px]">Giá bán</TableHead>
+                      <TableHead className="w-[150px]">Giá trước giảm</TableHead>
+                    </>
+                  )}
                   <TableHead className="w-[120px]">Tồn kho</TableHead>
                   <TableHead className="w-[60px]" />
                 </TableRow>
@@ -428,12 +434,16 @@ export function InlineMatrixBuilder({
                     <TableCell>
                       <Input value={variant.sku} onChange={(event) => updateVariantField(index, "sku", event.target.value)} placeholder="VD: SP-DEN-39" className="h-8" />
                     </TableCell>
-                    <TableCell>
-                      <Input type="number" value={variant.price || ""} onChange={(event) => updateVariantField(index, "price", Number.parseFloat(event.target.value) || 0)} className="h-8" />
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" value={variant.salePrice || ""} onChange={(event) => updateVariantField(index, "salePrice", event.target.value.trim() ? Number.parseFloat(event.target.value) || undefined : undefined)} className="h-8" />
-                    </TableCell>
+                    {showPricing && (
+                      <>
+                        <TableCell>
+                          <Input type="number" value={variant.price || ""} onChange={(event) => updateVariantField(index, "price", Number.parseFloat(event.target.value) || 0)} className="h-8" />
+                        </TableCell>
+                        <TableCell>
+                          <Input type="number" value={variant.salePrice || ""} onChange={(event) => updateVariantField(index, "salePrice", event.target.value.trim() ? Number.parseFloat(event.target.value) || undefined : undefined)} className="h-8" />
+                        </TableCell>
+                      </>
+                    )}
                     <TableCell>
                       <Input type="number" value={variant.stock || ""} onChange={(event) => updateVariantField(index, "stock", Number.parseInt(event.target.value) || 0)} className="h-8" />
                     </TableCell>

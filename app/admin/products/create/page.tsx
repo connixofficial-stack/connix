@@ -26,7 +26,7 @@ import { HomeComponentStickyFooter } from '@/app/admin/home-components/_shared/c
 import { AiEntityImportDialog, type AiEntityImportPayload } from '@/app/admin/components/AiEntityImportDialog';
 import { CategoryTagsInput } from '@/app/admin/components/AdditionalCategoriesSelect';
 import { InlineMatrixBuilder, type OptionCatalogItem, type VariantOptionSelection, type VariantRow } from '@/app/admin/products/components/inline-matrix-builder';
-import { normalizeVariantRows, normalizeVariantSelections, validateVariantPayload } from '@/app/admin/products/components/inline-variant-utils';
+import { normalizeVariantRows, normalizeVariantSelections, validateVariantPayload, type NormalizedVariantRow } from '@/app/admin/products/components/inline-variant-utils';
 
 const MODULE_KEY = 'products';
 
@@ -567,7 +567,15 @@ function ProductCreateContent() {
     }
     const variantPayload = {
       options: variantEnabled && hasVariants ? normalizedVariantSelections : [],
-      variants: variantEnabled && hasVariants ? normalizedVariantRows : [],
+      variants: (variantEnabled && hasVariants
+        ? (variantPricing === 'product'
+            ? normalizedVariantRows.map((v) => ({
+                ...v,
+                price: parseInt(price) || 0,
+                salePrice: salePrice.trim() ? resolveSalePrice(salePrice) : undefined,
+              }))
+            : normalizedVariantRows)
+        : []) as NormalizedVariantRow[],
     };
     if (variantEnabled && hasVariants) {
       const variantError = validateVariantPayload(
@@ -997,6 +1005,7 @@ function ProductCreateContent() {
                       setVariantSelections(selections);
                       setVariantRows(variants);
                     }}
+                    showPricing={variantPricing !== 'product'}
                   />
                 )}
               </CardContent>

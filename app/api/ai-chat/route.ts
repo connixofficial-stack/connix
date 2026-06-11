@@ -60,6 +60,20 @@ type ChatMessage = {
   role: 'assistant' | 'system' | 'user';
 };
 
+type ChatjptAnswerArgs = {
+  message: string;
+  model: string;
+  sourcePath?: string;
+  suggestions: SearchItem[];
+  systemPrompt: string;
+};
+
+type ChatjptRequestBody = {
+  messages: ChatMessage[];
+  model: string;
+  stream?: boolean;
+};
+
 type RuntimeConfig = {
   enabled: boolean;
   model: string;
@@ -215,6 +229,16 @@ function buildChatjptHttpError(status: number, raw: string): string {
   }
 }
 
+class ChatjptHttpError extends Error {
+  status: number;
+
+  constructor(status: number, raw: string) {
+    super(buildChatjptHttpError(status, raw));
+    this.name = 'ChatjptHttpError';
+    this.status = status;
+  }
+}
+
 const wantsSse = (request: Request, body: unknown) => {
   const accept = request.headers.get('accept') ?? '';
   return accept.includes('text/event-stream')
@@ -330,32 +354,35 @@ async function readSuggestions(client: ReturnType<typeof getConvexClient>, messa
   return flattenSuggestions(result as SearchResult);
 }
 
-async function generateChatjptAnswer(args: {
-  message: string;
-  model: string;
-  sourcePath?: string;
-  suggestions: SearchItem[];
-  systemPrompt: string;
-}) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  const userContent = [
+function buildChatjptUserContent(args: ChatjptAnswerArgs) {
+  return [
     `Câu hỏi khách: ${args.message}`,
     args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : '',
     '',
     'Dữ liệu site liên quan:',
     formatSuggestionsForPrompt(args.suggestions),
   ].filter(Boolean).join('\n');
+}
+
+function buildChatjptRequestBody(args: ChatjptAnswerArgs, stream = false): ChatjptRequestBody {
+  const body: ChatjptRequestBody = {
+    messages: [
+      { role: 'system', content: args.systemPrompt },
+      { role: 'user', content: buildChatjptUserContent(args) },
+    ],
+    model: args.model,
+  };
+
+  return stream ? { ...body, stream: true } : body;
+}
+
+async function generateChatjptAnswer(args: ChatjptAnswerArgs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
     const response = await fetch(CHATJPT_API_ENDPOINT, {
-      body: JSON.stringify({
-        model: args.model,
-        messages: [
-          { role: 'system', content: args.systemPrompt },
-          { role: 'user', content: userContent },
-        ] satisfies ChatMessage[],
-      }),
+      body: JSON.stringify(buildChatjptRequestBody(args)),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -365,7 +392,7 @@ async function generateChatjptAnswer(args: {
 
     const raw = await response.text();
     if (!response.ok) {
-      throw new Error(buildChatjptHttpError(response.status, raw));
+      throw new ChatjptHttpError(response.status, raw);
     }
 
     const text = extractChatjptText(raw);
@@ -379,33 +406,13 @@ async function generateChatjptAnswer(args: {
   }
 }
 
-async function streamChatjptAnswer(args: {
-  message: string;
-  model: string;
-  sourcePath?: string;
-  suggestions: SearchItem[];
-  systemPrompt: string;
-}, send: SseSend) {
+async function streamChatjptAnswer(args: ChatjptAnswerArgs, send: SseSend) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
-  const userContent = [
-    `Câu hỏi khách: ${args.message}`,
-    args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : '',
-    '',
-    'Dữ liệu site liên quan:',
-    formatSuggestionsForPrompt(args.suggestions),
-  ].filter(Boolean).join('\n');
 
   try {
     const response = await fetch(CHATJPT_API_ENDPOINT, {
-      body: JSON.stringify({
-        model: args.model,
-        messages: [
-          { role: 'system', content: args.systemPrompt },
-          { role: 'user', content: userContent },
-        ] satisfies ChatMessage[],
-        stream: true,
-      }),
+      body: JSON.stringify(buildChatjptRequestBody(args, true)),
       headers: {
         Accept: 'text/event-stream',
         'Content-Type': 'application/json',
@@ -415,7 +422,7 @@ async function streamChatjptAnswer(args: {
     });
 
     if (!response.ok) {
-      throw new Error(buildChatjptHttpError(response.status, await response.text()));
+      throw new ChatjptHttpError(response.status, await response.text());
     }
 
     const contentType = (response.headers.get('content-type') || '').toLowerCase();
@@ -499,13 +506,27 @@ export async function POST(request: Request) {
             provider: config.provider,
             suggestions,
           });
-          await streamChatjptAnswer({
+          const chatjptArgs = {
             message,
             model: config.model,
             sourcePath,
             suggestions,
             systemPrompt: config.systemPrompt,
-          }, send);
+          };
+
+          try {
+            await streamChatjptAnswer(chatjptArgs, send);
+          } catch (error) {
+            if (error instanceof ChatjptHttpError && error.status === 403) {
+              send('client-fallback', {
+                body: buildChatjptRequestBody(chatjptArgs, true),
+                endpoint: CHATJPT_API_ENDPOINT,
+                reason: 'server-egress-403',
+              });
+              return;
+            }
+            throw error;
+          }
           return;
         }
 

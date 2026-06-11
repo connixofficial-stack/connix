@@ -55,12 +55,22 @@ type SearchResult = {
   resources: SearchGroup;
 };
 
+type SearchScope = {
+  searchCourses: boolean;
+  searchPosts: boolean;
+  searchProducts: boolean;
+  searchProjects: boolean;
+  searchResources: boolean;
+  searchServices: boolean;
+};
+
 type ChatMessage = {
   content: string;
   role: 'assistant' | 'system' | 'user';
 };
 
 type ChatjptAnswerArgs = {
+  assistantContext: string;
   message: string;
   model: string;
   sourcePath?: string;
@@ -79,6 +89,11 @@ type RuntimeConfig = {
   model: string;
   provider: AiProvider;
   systemPrompt: string;
+};
+
+type AssistantContext = {
+  prompt: string;
+  searchScope: SearchScope;
 };
 
 type SseSend = (event: string, data: unknown) => void;
@@ -113,6 +128,15 @@ const normalizeSearchText = (value: string) => value
   .trim();
 
 const isGreetingOnly = (message: string) => GREETING_ONLY_QUERIES.has(normalizeSearchText(message));
+
+const DEFAULT_SEARCH_SCOPE: SearchScope = {
+  searchCourses: true,
+  searchPosts: true,
+  searchProducts: true,
+  searchProjects: true,
+  searchResources: true,
+  searchServices: true,
+};
 
 const formatSuggestionsForPrompt = (suggestions: SearchItem[]) => {
   if (suggestions.length === 0) {
@@ -335,7 +359,19 @@ async function readRuntimeConfig(client: ReturnType<typeof getConvexClient>): Pr
   };
 }
 
-async function readSuggestions(client: ReturnType<typeof getConvexClient>, message: string) {
+async function readAssistantContext(client: ReturnType<typeof getConvexClient>): Promise<AssistantContext> {
+  try {
+    return await client.query(api.systemIntegrations.getPublicAiAssistantContext, {});
+  } catch {
+    return { prompt: '', searchScope: DEFAULT_SEARCH_SCOPE };
+  }
+}
+
+async function readSuggestions(
+  client: ReturnType<typeof getConvexClient>,
+  message: string,
+  searchScope: SearchScope,
+) {
   if (isGreetingOnly(message)) {
     return [];
   }
@@ -343,12 +379,12 @@ async function readSuggestions(client: ReturnType<typeof getConvexClient>, messa
   const result = await client.query(api.search.autocomplete, {
     limit: 3,
     query: message.slice(0, 180),
-    searchCourses: true,
-    searchPosts: true,
-    searchProducts: true,
-    searchProjects: true,
-    searchResources: true,
-    searchServices: true,
+    searchCourses: searchScope.searchCourses,
+    searchPosts: searchScope.searchPosts,
+    searchProducts: searchScope.searchProducts,
+    searchProjects: searchScope.searchProjects,
+    searchResources: searchScope.searchResources,
+    searchServices: searchScope.searchServices,
   });
 
   return flattenSuggestions(result as SearchResult);
@@ -356,6 +392,7 @@ async function readSuggestions(client: ReturnType<typeof getConvexClient>, messa
 
 function buildChatjptUserContent(args: ChatjptAnswerArgs) {
   return [
+    args.assistantContext,
     `Câu hỏi khách: ${args.message}`,
     args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : '',
     '',
@@ -491,7 +528,10 @@ export async function POST(request: Request) {
     }
 
     const client = getConvexClient();
-    const config = await readRuntimeConfig(client);
+    const [config, assistantContext] = await Promise.all([
+      readRuntimeConfig(client),
+      readAssistantContext(client),
+    ]);
     if (stream) {
       return sseResponse(async (send) => {
         if (config.provider === 'chatjpt') {
@@ -500,13 +540,14 @@ export async function POST(request: Request) {
           }
 
           await consumeAiRateLimit(client, sessionId, sourcePath);
-          const suggestions = await readSuggestions(client, message);
+          const suggestions = await readSuggestions(client, message, assistantContext.searchScope);
           send('meta', {
             model: config.model,
             provider: config.provider,
             suggestions,
           });
           const chatjptArgs = {
+            assistantContext: assistantContext.prompt,
             message,
             model: config.model,
             sourcePath,
@@ -550,8 +591,9 @@ export async function POST(request: Request) {
       }
 
       await consumeAiRateLimit(client, sessionId, sourcePath);
-      const suggestions = await readSuggestions(client, message);
+      const suggestions = await readSuggestions(client, message, assistantContext.searchScope);
       const answer = await generateChatjptAnswer({
+        assistantContext: assistantContext.prompt,
         message,
         model: config.model,
         sourcePath,

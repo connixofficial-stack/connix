@@ -64,6 +64,20 @@ type SearchResult = {
   resources: SearchGroup;
 };
 
+type SearchScope = {
+  searchCourses: boolean;
+  searchPosts: boolean;
+  searchProducts: boolean;
+  searchProjects: boolean;
+  searchResources: boolean;
+  searchServices: boolean;
+};
+
+type AssistantContext = {
+  prompt: string;
+  searchScope: SearchScope;
+};
+
 type RuntimeConfig = {
   apiKey: string;
   enabled: boolean;
@@ -128,6 +142,15 @@ const GREETING_ONLY_QUERIES = new Set([
 
 const isGreetingOnly = (message: string) => GREETING_ONLY_QUERIES.has(normalizeSearchText(message));
 
+const DEFAULT_SEARCH_SCOPE: SearchScope = {
+  searchCourses: true,
+  searchPosts: true,
+  searchProducts: true,
+  searchProjects: true,
+  searchResources: true,
+  searchServices: true,
+};
+
 const formatSuggestionsForPrompt = (suggestions: SearchItem[]) => {
   if (suggestions.length === 0) {
     return "Không tìm thấy dữ liệu site khớp trực tiếp.";
@@ -168,6 +191,7 @@ const flattenSuggestions = (result: SearchResult): SearchItem[] => {
 
 async function generateGeminiAnswer(args: {
   apiKey: string;
+  assistantContext: string;
   message: string;
   model: string;
   sourcePath?: string;
@@ -188,6 +212,7 @@ async function generateGeminiAnswer(args: {
               parts: [
                 {
                   text: [
+                    args.assistantContext,
                     `Câu hỏi khách: ${args.message}`,
                     args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : "",
                     "",
@@ -306,6 +331,7 @@ function buildChatjptHttpError(status: number, raw: string): string {
 }
 
 async function generateChatjptAnswer(args: {
+  assistantContext: string;
   message: string;
   model: string;
   sourcePath?: string;
@@ -316,6 +342,7 @@ async function generateChatjptAnswer(args: {
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   const userContent = [
+    args.assistantContext,
     `Câu hỏi khách: ${args.message}`,
     args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : "",
     "",
@@ -460,23 +487,31 @@ export const sendMessage = action({
       throw new Error("Chatbot AI chưa có API key.");
     }
 
+    let assistantContext: AssistantContext = { prompt: "", searchScope: DEFAULT_SEARCH_SCOPE };
+    try {
+      assistantContext = await ctx.runQuery(api.systemIntegrations.getPublicAiAssistantContext, {});
+    } catch {
+      assistantContext = { prompt: "", searchScope: DEFAULT_SEARCH_SCOPE };
+    }
+
     const suggestions = isGreetingOnly(message)
       ? []
       : flattenSuggestions(await ctx.runQuery(api.search.autocomplete, {
         limit: 3,
         query: message.slice(0, 180),
-        searchCourses: true,
-        searchPosts: true,
-        searchProducts: true,
-        searchProjects: true,
-        searchResources: true,
-        searchServices: true,
+        searchCourses: assistantContext.searchScope.searchCourses,
+        searchPosts: assistantContext.searchScope.searchPosts,
+        searchProducts: assistantContext.searchScope.searchProducts,
+        searchProjects: assistantContext.searchScope.searchProjects,
+        searchResources: assistantContext.searchScope.searchResources,
+        searchServices: assistantContext.searchScope.searchServices,
       }) as SearchResult);
 
     let answer = "";
     if (config.provider === "gemini") {
       answer = await generateGeminiAnswer({
         apiKey: config.apiKey,
+        assistantContext: assistantContext.prompt,
         message,
         model: config.model,
         sourcePath: args.sourcePath,
@@ -486,6 +521,7 @@ export const sendMessage = action({
       });
     } else if (config.provider === "chatjpt") {
       answer = await generateChatjptAnswer({
+        assistantContext: assistantContext.prompt,
         message,
         model: config.model,
         sourcePath: args.sourcePath,

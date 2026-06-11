@@ -32,7 +32,7 @@ const aiConfigDoc = v.object({
   hasApiKey: v.boolean(),
   maskedApiKey: v.optional(v.string()),
   model: v.string(),
-  provider: v.literal(AI_PROVIDER),
+  provider: v.union(v.literal("gemini"), v.literal("chatjpt")),
   systemPrompt: v.string(),
   temperature: v.number(),
   widgetGreeting: v.string(),
@@ -136,7 +136,7 @@ function normalizeConfig(settings: Record<string, unknown>, hasApiKey: boolean, 
     enabled: toBooleanValue(settings.ai_chatbot_enabled, DEFAULT_AI_CONFIG.enabled),
     hasApiKey,
     model: toStringValue(settings.ai_model, DEFAULT_AI_CONFIG.model),
-    provider: AI_PROVIDER as "gemini",
+    provider: (settings.ai_provider as "gemini" | "chatjpt") ?? "gemini",
     systemPrompt: toStringValue(settings.ai_system_prompt, DEFAULT_AI_CONFIG.systemPrompt),
     temperature: toNumberValue(settings.ai_temperature, DEFAULT_AI_CONFIG.temperature, 0, 1),
     widgetGreeting: toStringValue(settings.ai_widget_greeting, DEFAULT_AI_CONFIG.widgetGreeting),
@@ -166,8 +166,9 @@ export const getPublicAiConfig = query({
       readSecret(ctx),
     ]);
     const config = normalizeConfig(settings, Boolean(secret?.value));
+    const isChatjpt = config.provider === "chatjpt";
     return {
-      enabled: config.enabled && config.hasApiKey,
+      enabled: config.enabled && (isChatjpt || config.hasApiKey),
       model: config.model,
       provider: config.provider,
       widgetGreeting: config.widgetGreeting,
@@ -177,7 +178,7 @@ export const getPublicAiConfig = query({
   returns: v.object({
     enabled: v.boolean(),
     model: v.string(),
-    provider: v.literal(AI_PROVIDER),
+    provider: v.union(v.literal("gemini"), v.literal("chatjpt")),
     widgetGreeting: v.string(),
     widgetTitle: v.string(),
   }),
@@ -189,7 +190,7 @@ export const saveAiConfig = mutation({
     clearApiKey: v.optional(v.boolean()),
     enabled: v.boolean(),
     model: v.string(),
-    provider: v.literal(AI_PROVIDER),
+    provider: v.union(v.literal("gemini"), v.literal("chatjpt")),
     systemPrompt: v.string(),
     temperature: v.number(),
     token: v.string(),

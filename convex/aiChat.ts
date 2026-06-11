@@ -60,7 +60,7 @@ type RuntimeConfig = {
   apiKey: string;
   enabled: boolean;
   model: string;
-  provider: "gemini";
+  provider: "gemini" | "chatjpt";
   systemPrompt: string;
   temperature: number;
 };
@@ -68,7 +68,7 @@ type RuntimeConfig = {
 type SendMessageResult = {
   message: string;
   model: string;
-  provider: "gemini";
+  provider: "gemini" | "chatjpt";
   suggestions: SearchItem[];
 };
 
@@ -220,6 +220,122 @@ async function generateGeminiAnswer(args: {
   }
 }
 
+function findFirstTextField(input: unknown): string {
+  if (typeof input === "string") return input;
+  if (Array.isArray(input)) {
+    for (const item of input) {
+      const found = findFirstTextField(item);
+      if (found.trim().length > 0) return found;
+    }
+    return "";
+  }
+  if (typeof input !== "object" || input === null) return "";
+
+  const record = input as Record<string, unknown>;
+  const directKeys = ["content", "text", "output_text", "answer", "message", "response"];
+  for (const key of directKeys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim().length > 0) return value;
+  }
+
+  const priorityKeys = ["result", "output", "data", "choices", "messages", "message", "delta"];
+  for (const key of priorityKeys) {
+    if (!(key in record)) continue;
+    const found = findFirstTextField(record[key]);
+    if (found.trim().length > 0) return found;
+  }
+
+  for (const value of Object.values(record)) {
+    const found = findFirstTextField(value);
+    if (found.trim().length > 0) return found;
+  }
+  return "";
+}
+
+function extractResponseFromRawStream(raw: string): string {
+  const normalized = raw.replace(/\r/g, "");
+  const matches = [...normalized.matchAll(/"response"\s*:\s*"((?:\\.|[^"\\])*)"/g)];
+  if (matches.length === 0) return "";
+
+  let out = "";
+  for (const match of matches) {
+    const piece = match[1];
+    if (!piece) continue;
+    try {
+      out += JSON.parse(`"${piece}"`) as string;
+    } catch {
+      out += piece;
+    }
+  }
+
+  return out.trim();
+}
+
+async function generateChatjptAnswer(args: {
+  message: string;
+  model: string;
+  sourcePath?: string;
+  suggestions: SearchItem[];
+  systemPrompt: string;
+}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  const userContent = [
+    `Câu hỏi khách: ${args.message}`,
+    args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : "",
+    "",
+    "Dữ liệu site liên quan:",
+    formatSuggestionsForPrompt(args.suggestions),
+  ].filter(Boolean).join("\n");
+
+  try {
+    const response = await fetch("https://chatjpt.rina.work/api/chat", {
+      body: JSON.stringify({
+        model: args.model,
+        messages: [
+          { role: "system", content: args.systemPrompt },
+          { role: "user", content: userContent },
+        ],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      signal: controller.signal,
+    });
+
+    const raw = await response.text();
+    if (!response.ok) {
+      throw new Error(`ChatJPT API error: HTTP ${response.status}`);
+    }
+
+    let text = "";
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.response === "string" && parsed.response.trim()) {
+        text = parsed.response.trim();
+      } else if (parsed.result && typeof parsed.result.response === "string") {
+        text = parsed.result.response.trim();
+      } else if (parsed.result && typeof parsed.result.output_text === "string") {
+        text = parsed.result.output_text.trim();
+      } else {
+        text = findFirstTextField(parsed);
+      }
+    } catch {
+      text = extractResponseFromRawStream(raw) || raw;
+    }
+
+    if (!text.trim()) {
+      throw new Error("ChatJPT không trả về nội dung.");
+    }
+
+    return text.trim();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export const getRuntimeConfig = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -239,7 +355,7 @@ export const getRuntimeConfig = internalQuery({
       apiKey: secret?.value ?? "",
       enabled: toBooleanValue(settings.ai_chatbot_enabled, false),
       model: toStringValue(settings.ai_model, DEFAULT_CONFIG.model),
-      provider: "gemini" as const,
+      provider: (settings.ai_provider as "gemini" | "chatjpt") ?? "gemini",
       systemPrompt: toStringValue(settings.ai_system_prompt, DEFAULT_CONFIG.systemPrompt),
       temperature: toNumberValue(settings.ai_temperature, DEFAULT_CONFIG.temperature, 0, 1),
     };
@@ -248,7 +364,7 @@ export const getRuntimeConfig = internalQuery({
     apiKey: v.string(),
     enabled: v.boolean(),
     model: v.string(),
-    provider: v.literal("gemini"),
+    provider: v.union(v.literal("gemini"), v.literal("chatjpt")),
     systemPrompt: v.string(),
     temperature: v.number(),
   }),
@@ -292,7 +408,7 @@ export const sendMessage = action({
     if (!config.enabled) {
       throw new Error("Chatbot AI đang tắt.");
     }
-    if (!config.apiKey) {
+    if (config.provider === "gemini" && !config.apiKey) {
       throw new Error("Chatbot AI chưa có API key.");
     }
 
@@ -308,15 +424,29 @@ export const sendMessage = action({
         searchResources: true,
         searchServices: true,
       }) as SearchResult);
-    const answer = await generateGeminiAnswer({
-      apiKey: config.apiKey,
-      message,
-      model: config.model,
-      sourcePath: args.sourcePath,
-      suggestions,
-      systemPrompt: config.systemPrompt,
-      temperature: config.temperature,
-    });
+
+    let answer = "";
+    if (config.provider === "gemini") {
+      answer = await generateGeminiAnswer({
+        apiKey: config.apiKey,
+        message,
+        model: config.model,
+        sourcePath: args.sourcePath,
+        suggestions,
+        systemPrompt: config.systemPrompt,
+        temperature: config.temperature,
+      });
+    } else if (config.provider === "chatjpt") {
+      answer = await generateChatjptAnswer({
+        message,
+        model: config.model,
+        sourcePath: args.sourcePath,
+        suggestions,
+        systemPrompt: config.systemPrompt,
+      });
+    } else {
+      throw new Error("Provider AI không hợp lệ.");
+    }
 
     return {
       message: answer,
@@ -328,7 +458,7 @@ export const sendMessage = action({
   returns: v.object({
     message: v.string(),
     model: v.string(),
-    provider: v.literal("gemini"),
+    provider: v.union(v.literal("gemini"), v.literal("chatjpt")),
     suggestions: v.array(suggestionDoc),
   }),
 });

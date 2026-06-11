@@ -10,7 +10,6 @@ import {
   Instagram,
   Mail,
   MapPin,
-  MessageCircle,
   MessageSquareMore,
   Phone,
   Plus,
@@ -72,6 +71,19 @@ const MessengerIcon = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
+const AiChatIcon = ({ size = 18 }: { size?: number }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {/* Anten */}
+    <path d="M12 9V5h3" />
+    {/* Mặt robot */}
+    <rect x="6" y="9" width="12" height="8" rx="2" />
+    {/* Hai mắt */}
+    <path d="M10 12v2M14 12v2" />
+    {/* Hai tai */}
+    <path d="M4 13h2M18 13h2" />
+  </svg>
+);
+
 interface SpeedDialSectionSharedProps {
   actions: SpeedDialAction[];
   style: SpeedDialStyle;
@@ -116,7 +128,7 @@ export const getIconNode = (name: string, size = 18) => {
   if (normalized === 'instagram') {return <Instagram size={size} />;}
   if (normalized === 'mail') {return <Mail size={size} />;}
   if (normalized === 'map-pin') {return <MapPin size={size} />;}
-  if (normalized === 'message-circle') {return <MessageCircle size={size} />;}
+  if (normalized === 'message-circle') {return <AiChatIcon size={size} />;}
   if (normalized === 'shopping-cart') {return <ShoppingCart size={size} />;}
   if (normalized === 'telegram') {return <Send size={size} />;}
   if (normalized === 'tiktok') {return <TikTokIcon size={size} />;}

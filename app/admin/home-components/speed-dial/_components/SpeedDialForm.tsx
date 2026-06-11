@@ -12,7 +12,6 @@ import {
   Instagram,
   Mail,
   MapPin,
-  MessageCircle,
   Pencil,
   Phone,
   Plus,
@@ -70,6 +69,19 @@ const MessengerSvg = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
+const AiChatSvg = ({ size = 18 }: { size?: number }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {/* Anten */}
+    <path d="M12 9V5h3" />
+    {/* Mặt robot */}
+    <rect x="6" y="9" width="12" height="8" rx="2" />
+    {/* Hai mắt */}
+    <path d="M10 12v2M14 12v2" />
+    {/* Hai tai */}
+    <path d="M4 13h2M18 13h2" />
+  </svg>
+);
+
 /* ------------------------------------------------------------------ */
 /*  Icon registry with suggestions                                     */
 /* ------------------------------------------------------------------ */
@@ -88,7 +100,7 @@ const ICON_DEFS: IconDef[] = [
   { value: 'phone', label: 'Điện thoại', brandColor: '#ef4444', suggestedLabel: 'Gọi ngay', suggestedUrl: 'tel:0123456789' },
   { value: 'mail', label: 'Email', brandColor: '#ea580c', suggestedLabel: 'Email', suggestedUrl: 'mailto:contact@example.com' },
   { value: 'messenger', label: 'Messenger', brandColor: '#0084ff', suggestedLabel: 'Messenger', suggestedUrl: 'https://m.me/yourpage' },
-  { value: 'message-circle', label: 'Chat AI', brandColor: '#3b82f6', suggestedLabel: 'Chat AI', suggestedUrl: '#ai-chatbot' },
+  { value: 'message-circle', label: 'Chat AI', brandColor: '#8b5cf6', suggestedLabel: 'Chat AI', suggestedUrl: '#ai-chatbot' },
   { value: 'map-pin', label: 'Địa chỉ', brandColor: '#f97316', suggestedLabel: 'Chỉ đường', suggestedUrl: 'https://maps.google.com/?q=your+address' },
   { value: 'zalo', label: 'Zalo', brandColor: '#0084ff', suggestedLabel: 'Chat Zalo', suggestedUrl: 'https://zalo.me/yourpage' },
   { value: 'facebook', label: 'Facebook', brandColor: '#1877f2', suggestedLabel: 'Facebook', suggestedUrl: 'https://facebook.com/yourpage' },
@@ -129,6 +141,7 @@ const renderIcon = (value: string, size = 16) => {
   if (value === 'x') return <XSvg size={size} />;
   if (value === 'shopee') return <ShopeeSvg size={size} />;
   if (value === 'messenger') return <MessengerSvg size={size} />;
+  if (value === 'message-circle') return <AiChatSvg size={size} />;
 
   // Lazada & Tiki dùng PNG logo
   const def = ICON_DEFS.find((d) => d.value === value);
@@ -137,7 +150,7 @@ const renderIcon = (value: string, size = 16) => {
   }
 
   const map: Record<string, React.ElementType> = {
-    phone: Phone, mail: Mail, 'message-circle': MessageCircle, 'map-pin': MapPin,
+    phone: Phone, mail: Mail, 'map-pin': MapPin,
     facebook: Facebook, instagram: Instagram, youtube: Youtube, telegram: Send,
     calendar: Calendar, 'shopping-cart': ShoppingCart, headphones: Headphones,
     'help-circle': HelpCircle,

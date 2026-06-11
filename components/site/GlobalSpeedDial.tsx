@@ -11,26 +11,6 @@ const normalizeBoolean = (value: unknown, fallback: boolean) => (
   typeof value === 'boolean' ? value : fallback
 );
 
-const CHATBOT_ACTION = {
-  bgColor: '#2563eb',
-  icon: 'message-circle',
-  label: 'Chat AI',
-  uiKey: 'ai-chatbot',
-  url: '#ai-chatbot',
-};
-
-const withChatbotAction = (config: Record<string, unknown>, enabled: boolean) => {
-  if (!enabled) {return config;}
-  const actions = Array.isArray(config.actions) ? config.actions : [];
-  const hasChatbot = actions.some((action) => (
-    typeof action === 'object'
-    && action !== null
-    && (action as Record<string, unknown>).url === CHATBOT_ACTION.url
-  ));
-  if (hasChatbot) {return config;}
-  return { ...config, actions: [...actions, CHATBOT_ACTION] };
-};
-
 export function GlobalSpeedDial() {
   const components = useQuery(api.homeComponents.listActive);
   const chatbotConfig = useQuery(api.systemIntegrations.getPublicAiConfig);
@@ -59,20 +39,30 @@ export function GlobalSpeedDial() {
 
   const chatbotEnabled = chatbotConfig?.enabled === true;
 
-  if (!speedDialComponent && !chatbotEnabled) {
+  const speedDialConfig = React.useMemo(() => {
+    if (!speedDialComponent) {return null;}
+    const config = speedDialComponent.config as Record<string, unknown>;
+    const actions = Array.isArray(config.actions) ? config.actions : [];
+
+    // Nếu chatbot bị tắt ở integrations, lọc bỏ các hành động chatbot (có url là '#ai-chatbot')
+    const filteredActions = chatbotEnabled
+      ? actions
+      : actions.filter((action) => {
+          if (typeof action === 'object' && action !== null) {
+            return (action as Record<string, unknown>).url !== '#ai-chatbot';
+          }
+          return true;
+        });
+
+    return {
+      ...config,
+      actions: filteredActions,
+    };
+  }, [speedDialComponent, chatbotEnabled]);
+
+  if (!speedDialComponent || !speedDialConfig) {
     return null;
   }
-
-  const speedDialConfig = speedDialComponent
-    ? withChatbotAction(speedDialComponent.config as Record<string, unknown>, chatbotEnabled)
-    : {
-      actions: [CHATBOT_ACTION],
-      defaultOpen: true,
-      enableShadow: true,
-      position: 'bottom-right',
-      showOnAllPages: true,
-      style: 'fab',
-    };
 
   return (
     <SpeedDialSection
@@ -80,7 +70,7 @@ export function GlobalSpeedDial() {
       brandColor={resolvedColors.primary}
       secondary={resolvedColors.secondary}
       mode={resolvedColors.mode}
-      title={speedDialComponent?.title ?? chatbotConfig?.widgetTitle ?? 'Trợ lý AI'}
+      title={speedDialComponent.title ?? chatbotConfig?.widgetTitle ?? 'Trợ lý AI'}
       isDark={isDark}
     />
   );

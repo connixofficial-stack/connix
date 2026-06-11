@@ -45,6 +45,7 @@ const quickQuestions = [
 
 export function AiChatbotWidget() {
   const config = useQuery(api.systemIntegrations.getPublicAiConfig);
+  const providerLabel = config?.provider === 'chatjpt' ? 'ChatJPT' : 'Gemini AI';
   const [isOpen, setIsOpen] = React.useState(false);
   const [input, setInput] = React.useState('');
   const [isSending, setIsSending] = React.useState(false);
@@ -131,7 +132,7 @@ export function AiChatbotWidget() {
           </span>
           <div>
             <p className="text-sm font-bold">{config.widgetTitle}</p>
-            <p className="text-[11px] text-white/75">Gemini AI • phản hồi theo dữ liệu site</p>
+            <p className="text-[11px] text-white/75">{providerLabel} • phản hồi theo dữ liệu site</p>
           </div>
         </div>
         <button

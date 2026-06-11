@@ -3,8 +3,9 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 const AI_GROUP = "ai";
-const AI_PROVIDER = "gemini";
 const AI_SECRET_KEY = "gemini_api_key";
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite";
+const DEFAULT_CHATJPT_MODEL = "@cf/openai/gpt-oss-120b";
 
 const AI_SETTING_KEYS = [
   "ai_chatbot_enabled",
@@ -18,14 +19,16 @@ const AI_SETTING_KEYS = [
 
 const DEFAULT_AI_CONFIG = {
   enabled: false,
-  model: "gemini-2.5-flash-lite",
-  provider: AI_PROVIDER,
+  model: DEFAULT_GEMINI_MODEL,
+  provider: "gemini",
   systemPrompt:
     "Bạn là trợ lý AI của website. Trả lời bằng tiếng Việt, ngắn gọn, lịch sự, ưu tiên dựa trên dữ liệu site được cung cấp và gợi ý link phù hợp khi có.",
   temperature: 0.4,
   widgetGreeting: "Xin chào, tôi có thể hỗ trợ gì cho bạn?",
   widgetTitle: "Trợ lý AI",
 } as const;
+
+type AiProvider = "gemini" | "chatjpt";
 
 const aiConfigDoc = v.object({
   enabled: v.boolean(),
@@ -131,12 +134,25 @@ const maskSecret = (value: string) => {
   return `••••${trimmed.slice(-6)}`;
 };
 
+const normalizeProvider = (value: unknown): AiProvider => (
+  value === "chatjpt" ? "chatjpt" : "gemini"
+);
+
+const normalizeModel = (provider: AiProvider, value: unknown) => {
+  const model = toStringValue(value, "");
+  if (provider === "chatjpt") {
+    return model.startsWith("@cf/") ? model : DEFAULT_CHATJPT_MODEL;
+  }
+  return model.startsWith("gemini-") ? model : DEFAULT_GEMINI_MODEL;
+};
+
 function normalizeConfig(settings: Record<string, unknown>, hasApiKey: boolean, maskedApiKey?: string) {
+  const provider = normalizeProvider(settings.ai_provider);
   const config = {
     enabled: toBooleanValue(settings.ai_chatbot_enabled, DEFAULT_AI_CONFIG.enabled),
     hasApiKey,
-    model: toStringValue(settings.ai_model, DEFAULT_AI_CONFIG.model),
-    provider: (settings.ai_provider as "gemini" | "chatjpt") ?? "gemini",
+    model: normalizeModel(provider, settings.ai_model),
+    provider,
     systemPrompt: toStringValue(settings.ai_system_prompt, DEFAULT_AI_CONFIG.systemPrompt),
     temperature: toNumberValue(settings.ai_temperature, DEFAULT_AI_CONFIG.temperature, 0, 1),
     widgetGreeting: toStringValue(settings.ai_widget_greeting, DEFAULT_AI_CONFIG.widgetGreeting),

@@ -1,4 +1,4 @@
-import { action, internalMutation, internalQuery } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
 import { consumeRateLimit } from "./lib/rateLimit";
@@ -6,6 +6,8 @@ import { normalizeSearchText } from "./lib/search";
 
 const AI_GROUP = "ai";
 const AI_SECRET_KEY = "gemini_api_key";
+const DEFAULT_CHATJPT_MODEL = "@cf/openai/gpt-oss-120b";
+const CHATJPT_API_ENDPOINT = "https://chatjpt.rina.work/api/chat";
 
 const AI_SETTING_KEYS = [
   "ai_chatbot_enabled",
@@ -23,6 +25,12 @@ const DEFAULT_CONFIG = {
     "Bạn là trợ lý AI của website. Trả lời bằng tiếng Việt, ngắn gọn, lịch sự, ưu tiên dựa trên dữ liệu site được cung cấp và gợi ý link phù hợp khi có.",
   temperature: 0.4,
 };
+
+const normalizeChatjptModel = (model: string) => (
+  model.trim().startsWith("@cf/") ? model.trim() : DEFAULT_CHATJPT_MODEL
+);
+
+type AiProvider = "gemini" | "chatjpt";
 
 const suggestionDoc = v.object({
   title: v.string(),
@@ -60,7 +68,7 @@ type RuntimeConfig = {
   apiKey: string;
   enabled: boolean;
   model: string;
-  provider: "gemini" | "chatjpt";
+  provider: AiProvider;
   systemPrompt: string;
   temperature: number;
 };
@@ -68,7 +76,7 @@ type RuntimeConfig = {
 type SendMessageResult = {
   message: string;
   model: string;
-  provider: "gemini" | "chatjpt";
+  provider: AiProvider;
   suggestions: SearchItem[];
 };
 
@@ -86,6 +94,18 @@ const toNumberValue = (value: unknown, fallback: number, min: number, max: numbe
     return fallback;
   }
   return Math.min(max, Math.max(min, raw));
+};
+
+const normalizeProvider = (value: unknown): AiProvider => (
+  value === "chatjpt" ? "chatjpt" : "gemini"
+);
+
+const normalizeRuntimeModel = (provider: AiProvider, value: unknown) => {
+  const model = toStringValue(value, "");
+  if (provider === "chatjpt") {
+    return normalizeChatjptModel(model);
+  }
+  return model.startsWith("gemini-") ? model : DEFAULT_CONFIG.model;
 };
 
 const sanitizeMessage = (message: string) => message.trim().slice(0, 1200);
@@ -271,6 +291,20 @@ function extractResponseFromRawStream(raw: string): string {
   return out.trim();
 }
 
+function buildChatjptHttpError(status: number, raw: string): string {
+  const prefix = `ChatJPT API error: HTTP ${status}`;
+  const trimmed = raw.trim();
+  if (!trimmed) return prefix;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    const apiError = findFirstTextField(parsed).trim();
+    return apiError ? `${prefix}: ${apiError.slice(0, 240)}` : prefix;
+  } catch {
+    return `${prefix}: ${trimmed.slice(0, 240)}`;
+  }
+}
+
 async function generateChatjptAnswer(args: {
   message: string;
   model: string;
@@ -290,9 +324,9 @@ async function generateChatjptAnswer(args: {
   ].filter(Boolean).join("\n");
 
   try {
-    const response = await fetch("https://chatjpt.rina.work/api/chat", {
+    const response = await fetch(CHATJPT_API_ENDPOINT, {
       body: JSON.stringify({
-        model: args.model,
+        model: normalizeChatjptModel(args.model),
         messages: [
           { role: "system", content: args.systemPrompt },
           { role: "user", content: userContent },
@@ -300,9 +334,6 @@ async function generateChatjptAnswer(args: {
       }),
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Origin": "https://vibe.j2team.org",
-        "Referer": "https://vibe.j2team.org/",
       },
       method: "POST",
       signal: controller.signal,
@@ -310,7 +341,7 @@ async function generateChatjptAnswer(args: {
 
     const raw = await response.text();
     if (!response.ok) {
-      throw new Error(`ChatJPT API error: HTTP ${response.status}`);
+      throw new Error(buildChatjptHttpError(response.status, raw));
     }
 
     let text = "";
@@ -353,12 +384,13 @@ export const getRuntimeConfig = internalQuery({
       .query("integrationSecrets")
       .withIndex("by_group_key", (q) => q.eq("group", AI_GROUP).eq("key", AI_SECRET_KEY))
       .unique();
+    const provider = normalizeProvider(settings.ai_provider);
 
     return {
       apiKey: secret?.value ?? "",
       enabled: toBooleanValue(settings.ai_chatbot_enabled, false),
-      model: toStringValue(settings.ai_model, DEFAULT_CONFIG.model),
-      provider: (settings.ai_provider as "gemini" | "chatjpt") ?? "gemini",
+      model: normalizeRuntimeModel(provider, settings.ai_model),
+      provider,
       systemPrompt: toStringValue(settings.ai_system_prompt, DEFAULT_CONFIG.systemPrompt),
       temperature: toNumberValue(settings.ai_temperature, DEFAULT_CONFIG.temperature, 0, 1),
     };
@@ -374,6 +406,19 @@ export const getRuntimeConfig = internalQuery({
 });
 
 export const consumeAiChatRateLimit = internalMutation({
+  args: { identifier: v.string() },
+  handler: async (ctx, args) => {
+    const key = args.identifier.trim().slice(0, 160) || "anonymous";
+    return await consumeRateLimit(ctx, key, "aiChat");
+  },
+  returns: v.object({
+    allowed: v.boolean(),
+    remaining: v.number(),
+    resetIn: v.number(),
+  }),
+});
+
+export const consumePublicAiChatRateLimit = mutation({
   args: { identifier: v.string() },
   handler: async (ctx, args) => {
     const key = args.identifier.trim().slice(0, 160) || "anonymous";

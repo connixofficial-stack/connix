@@ -25,6 +25,10 @@ const SETTINGS_KEYS = [
 
 type SettingsKey = (typeof SETTINGS_KEYS)[number];
 type IntegrationTab = 'email' | 'ai';
+type AiProvider = 'gemini' | 'chatjpt';
+
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite';
+const DEFAULT_CHATJPT_MODEL = '@cf/openai/gpt-oss-120b';
 
 const toSafeString = (value: unknown) => (typeof value === 'string' ? value : '');
 
@@ -54,7 +58,7 @@ interface AiForm {
   apiKey: string;
   enabled: boolean;
   model: string;
-  provider: string;
+  provider: AiProvider;
   systemPrompt: string;
   temperature: string;
   widgetGreeting: string;
@@ -64,7 +68,7 @@ interface AiForm {
 const DEFAULT_AI_FORM: AiForm = {
   apiKey: '',
   enabled: false,
-  model: 'gemini-2.5-flash-lite',
+  model: DEFAULT_GEMINI_MODEL,
   provider: 'gemini',
   systemPrompt: 'Bạn là trợ lý AI của website. Trả lời bằng tiếng Việt, ngắn gọn, lịch sự, ưu tiên dựa trên dữ liệu site được cung cấp và gợi ý link phù hợp khi có.',
   temperature: '0.4',
@@ -911,10 +915,9 @@ export default function IntegrationsPage() {
                   <select
                     value={aiForm.provider}
                     onChange={(e) => {
-                      const newProvider = e.target.value;
+                      const newProvider = e.target.value as AiProvider;
                       updateAiField('provider', newProvider);
-                      // Tự động chuyển model mặc định tương ứng
-                      updateAiField('model', newProvider === 'gemini' ? 'gemini-2.5-flash-lite' : '@cf/openai/gpt-oss-120b');
+                      updateAiField('model', newProvider === 'gemini' ? DEFAULT_GEMINI_MODEL : DEFAULT_CHATJPT_MODEL);
                     }}
                     className="min-h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
                   >
@@ -942,6 +945,7 @@ export default function IntegrationsPage() {
                         <option value="@cf/meta/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B 16E</option>
                         <option value="@cf/google/gemma-3-12b-it">Gemma 3 12B IT</option>
                         <option value="@cf/deepseek-ai/deepseek-r1-distill-qwen-32b">DeepSeek R1 Distill Qwen 32B</option>
+                        <option value="@cf/qwen/qwen3-30b-a3b-fp8">Qwen3 30B A3B FP8</option>
                         <option value="@cf/qwen/qwq-32b">QwQ 32B</option>
                         <option value="@cf/mistral/mistral-7b-instruct-v0.1">Mistral 7B</option>
                       </>
@@ -982,7 +986,11 @@ export default function IntegrationsPage() {
                     )}
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
-                    <span>Key lấy tại aistudio.google.com/apikey, chỉ lưu phía server.</span>
+                    <span>
+                      {aiForm.provider === 'chatjpt'
+                        ? 'ChatJPT dùng endpoint public của J2TEAM, không cần API key.'
+                        : 'Key lấy tại aistudio.google.com/apikey, chỉ lưu phía server.'}
+                    </span>
                     {aiConfig.hasApiKey && (
                       <button
                         type="button"

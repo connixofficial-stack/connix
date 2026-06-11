@@ -67,6 +67,8 @@ type RuntimeConfig = {
   systemPrompt: string;
 };
 
+type SseSend = (event: string, data: unknown) => void;
+
 const toStringValue = (value: unknown, fallback: string) => (
   typeof value === 'string' && value.trim() ? value.trim() : fallback
 );
@@ -213,6 +215,90 @@ function buildChatjptHttpError(status: number, raw: string): string {
   }
 }
 
+const wantsSse = (request: Request, body: unknown) => {
+  const accept = request.headers.get('accept') ?? '';
+  return accept.includes('text/event-stream')
+    || (typeof body === 'object' && body !== null && (body as { stream?: unknown }).stream === true);
+};
+
+function sseResponse(run: (send: SseSend) => Promise<void>) {
+  const encoder = new TextEncoder();
+
+  return new Response(new ReadableStream({
+    async start(controller) {
+      const send: SseSend = (event, data) => {
+        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+      };
+
+      try {
+        await run(send);
+      } catch (error) {
+        send('error', {
+          message: error instanceof Error ? error.message : 'Chatbot AI chưa thể phản hồi.',
+        });
+      } finally {
+        send('done', {});
+        controller.close();
+      }
+    },
+  }), {
+    headers: {
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'X-Accel-Buffering': 'no',
+    },
+  });
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function emitTextInChunks(text: string, send: SseSend) {
+  const normalized = text.trim();
+  if (!normalized) return;
+
+  for (let index = 0; index < normalized.length; index += 18) {
+    send('delta', { text: normalized.slice(index, index + 18) });
+    await sleep(12);
+  }
+}
+
+function parseSseBlock(block: string) {
+  let event = 'message';
+  const dataLines: string[] = [];
+
+  for (const line of block.replace(/\r/g, '').split('\n')) {
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trimStart());
+    }
+  }
+
+  const rawData = dataLines.join('\n').trim();
+  if (!rawData || rawData === '[DONE]') {
+    return { data: null, event };
+  }
+
+  try {
+    return { data: JSON.parse(rawData), event };
+  } catch {
+    return { data: rawData, event };
+  }
+}
+
+async function consumeAiRateLimit(
+  client: ReturnType<typeof getConvexClient>,
+  sessionId?: string,
+  sourcePath?: string,
+) {
+  const identifier = `ai-chat:${(sessionId ?? sourcePath ?? 'anonymous').slice(0, 140)}`;
+  const rateLimit = await client.mutation(api.aiChat.consumePublicAiChatRateLimit, { identifier });
+  if (!rateLimit.allowed) {
+    throw new Error('Bạn đang hỏi hơi nhanh. Vui lòng thử lại sau ít phút.');
+  }
+}
+
 async function readRuntimeConfig(client: ReturnType<typeof getConvexClient>): Promise<RuntimeConfig> {
   const settings = await client.query(api.settings.getMultiple, { keys: [...AI_SETTING_KEYS] });
   const provider = normalizeProvider(settings.ai_provider);
@@ -293,9 +379,102 @@ async function generateChatjptAnswer(args: {
   }
 }
 
+async function streamChatjptAnswer(args: {
+  message: string;
+  model: string;
+  sourcePath?: string;
+  suggestions: SearchItem[];
+  systemPrompt: string;
+}, send: SseSend) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const userContent = [
+    `Câu hỏi khách: ${args.message}`,
+    args.sourcePath ? `Trang hiện tại: ${args.sourcePath}` : '',
+    '',
+    'Dữ liệu site liên quan:',
+    formatSuggestionsForPrompt(args.suggestions),
+  ].filter(Boolean).join('\n');
+
+  try {
+    const response = await fetch(CHATJPT_API_ENDPOINT, {
+      body: JSON.stringify({
+        model: args.model,
+        messages: [
+          { role: 'system', content: args.systemPrompt },
+          { role: 'user', content: userContent },
+        ] satisfies ChatMessage[],
+        stream: true,
+      }),
+      headers: {
+        Accept: 'text/event-stream',
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(buildChatjptHttpError(response.status, await response.text()));
+    }
+
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    if (!response.body || !contentType.includes('text/event-stream')) {
+      const text = extractChatjptText(await response.text());
+      if (!text.trim()) {
+        throw new Error('ChatJPT không trả về nội dung.');
+      }
+      await emitTextInChunks(text, send);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let emitted = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const blocks = buffer.split(/\n\n/);
+      buffer = blocks.pop() ?? '';
+
+      for (const block of blocks) {
+        const parsed = parseSseBlock(block);
+        if (parsed.data === null || parsed.event === 'done') {
+          continue;
+        }
+
+        const text = findFirstTextField(parsed.data);
+        if (!text.trim()) {
+          continue;
+        }
+
+        const delta = text.startsWith(emitted) ? text.slice(emitted.length) : text;
+        if (delta) {
+          send('delta', { text: delta });
+        }
+        emitted = text.startsWith(emitted) ? text : `${emitted}${delta}`;
+      }
+
+      if (done) {
+        break;
+      }
+    }
+
+    const finalText = emitted.trim();
+    if (!finalText) {
+      throw new Error('ChatJPT không trả về nội dung.');
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const stream = wantsSse(request, body);
     const message = String(body?.message ?? '').trim();
     const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : undefined;
     const sourcePath = typeof body?.sourcePath === 'string' ? body.sourcePath : undefined;
@@ -306,17 +485,50 @@ export async function POST(request: Request) {
 
     const client = getConvexClient();
     const config = await readRuntimeConfig(client);
+    if (stream) {
+      return sseResponse(async (send) => {
+        if (config.provider === 'chatjpt') {
+          if (!config.enabled) {
+            throw new Error('Chatbot AI đang tắt.');
+          }
+
+          await consumeAiRateLimit(client, sessionId, sourcePath);
+          const suggestions = await readSuggestions(client, message);
+          send('meta', {
+            model: config.model,
+            provider: config.provider,
+            suggestions,
+          });
+          await streamChatjptAnswer({
+            message,
+            model: config.model,
+            sourcePath,
+            suggestions,
+            systemPrompt: config.systemPrompt,
+          }, send);
+          return;
+        }
+
+        const result = await client.action(api.aiChat.sendMessage, {
+          message,
+          sessionId,
+          sourcePath,
+        });
+        send('meta', {
+          model: result.model,
+          provider: result.provider,
+          suggestions: result.suggestions,
+        });
+        await emitTextInChunks(result.message, send);
+      });
+    }
+
     if (config.provider === 'chatjpt') {
       if (!config.enabled) {
         throw new Error('Chatbot AI đang tắt.');
       }
 
-      const identifier = `ai-chat:${(sessionId ?? sourcePath ?? 'anonymous').slice(0, 140)}`;
-      const rateLimit = await client.mutation(api.aiChat.consumePublicAiChatRateLimit, { identifier });
-      if (!rateLimit.allowed) {
-        throw new Error('Bạn đang hỏi hơi nhanh. Vui lòng thử lại sau ít phút.');
-      }
-
+      await consumeAiRateLimit(client, sessionId, sourcePath);
       const suggestions = await readSuggestions(client, message);
       const answer = await generateChatjptAnswer({
         message,

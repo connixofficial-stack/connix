@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { getEmailConfigurationStatus } from '@/lib/email-config-status';
+import { SafeMarkdown } from '@/components/common/SafeMarkdown';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SYSTEM_TOKEN_KEY = 'system_auth_token';
@@ -1084,7 +1085,7 @@ export default function IntegrationsPage() {
               {aiTestResponse && (
                 <div className="rounded-2xl border border-cyan-100 bg-cyan-50 p-4 text-sm leading-relaxed text-slate-700 dark:border-cyan-900/40 dark:bg-cyan-950/20 dark:text-slate-200">
                   <p className="mb-1 text-xs font-bold uppercase tracking-wider text-cyan-600">Phản hồi</p>
-                  <p className="whitespace-pre-wrap">{aiTestResponse}</p>
+                  <SafeMarkdown className="text-sm" content={aiTestResponse} />
                 </div>
               )}
             </div>

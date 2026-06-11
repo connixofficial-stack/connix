@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Bot, ExternalLink, Loader2, Send, Sparkles, X } from 'lucide-react';
+import { Bot, ExternalLink, Loader2, Send, X } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { SafeMarkdown } from '@/components/common/SafeMarkdown';
 
 export const AI_CHATBOT_OPEN_EVENT = 'vietadmin:open-ai-chatbot';
 
@@ -38,10 +39,78 @@ const getSessionId = () => {
 };
 
 const quickQuestions = [
-  'Tư vấn giúp tôi sản phẩm phù hợp',
-  'Website có dịch vụ gì nổi bật?',
-  'Tôi muốn liên hệ tư vấn',
+  'Tư vấn sản phẩm',
+  'Dịch vụ nổi bật',
+  'Liên hệ tư vấn',
 ];
+
+function parseSseBlock(block: string) {
+  let event = 'message';
+  const dataLines: string[] = [];
+
+  for (const line of block.replace(/\r/g, '').split('\n')) {
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trimStart());
+    }
+  }
+
+  const rawData = dataLines.join('\n').trim();
+  if (!rawData || rawData === '[DONE]') {
+    return { data: null, event };
+  }
+
+  try {
+    return { data: JSON.parse(rawData) as unknown, event };
+  } catch {
+    return { data: rawData, event };
+  }
+}
+
+async function readAiChatStream(
+  response: Response,
+  callbacks: {
+    onDelta: (text: string) => void;
+    onError: (message: string) => void;
+    onMeta: (suggestions: Suggestion[]) => void;
+  },
+) {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Trình duyệt không hỗ trợ streaming.');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const blocks = buffer.split(/\n\n/);
+    buffer = blocks.pop() ?? '';
+
+    for (const block of blocks) {
+      const parsed = parseSseBlock(block);
+      if (parsed.event === 'delta' && typeof parsed.data === 'object' && parsed.data !== null) {
+        const text = (parsed.data as { text?: unknown }).text;
+        if (typeof text === 'string' && text) {
+          callbacks.onDelta(text);
+        }
+      } else if (parsed.event === 'meta' && typeof parsed.data === 'object' && parsed.data !== null) {
+        const suggestions = (parsed.data as { suggestions?: unknown }).suggestions;
+        callbacks.onMeta(Array.isArray(suggestions) ? suggestions as Suggestion[] : []);
+      } else if (parsed.event === 'error' && typeof parsed.data === 'object' && parsed.data !== null) {
+        const message = (parsed.data as { message?: unknown }).message;
+        callbacks.onError(typeof message === 'string' ? message : 'Chatbot AI chưa thể phản hồi.');
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+}
 
 export function AiChatbotWidget() {
   const config = useQuery(api.systemIntegrations.getPublicAiConfig);
@@ -51,6 +120,7 @@ export function AiChatbotWidget() {
   const [isSending, setIsSending] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const sessionIdRef = React.useRef<string>('');
+  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     sessionIdRef.current = getSessionId();
@@ -73,6 +143,10 @@ export function AiChatbotWidget() {
     return () => window.removeEventListener(AI_CHATBOT_OPEN_EVENT, openChatbot);
   }, []);
 
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isSending]);
+
   const sendMessage = async (raw: string) => {
     const message = raw.trim();
     if (!message || isSending) {
@@ -84,7 +158,21 @@ export function AiChatbotWidget() {
       id: createId(),
       role: 'user',
     };
-    setMessages((prev) => [...prev, userMessage]);
+    const assistantId = createId();
+    const assistantMessage: ChatMessage = {
+      content: '',
+      id: assistantId,
+      role: 'assistant',
+      suggestions: [],
+    };
+
+    const patchAssistant = (patch: Partial<ChatMessage>) => {
+      setMessages((prev) => prev.map((item) =>
+        item.id === assistantId ? { ...item, ...patch } : item
+      ));
+    };
+
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput('');
     setIsSending(true);
 
@@ -94,26 +182,41 @@ export function AiChatbotWidget() {
           message,
           sessionId: sessionIdRef.current || getSessionId(),
           sourcePath: window.location.pathname,
+          stream: true,
         }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Accept: 'text/event-stream',
+          'Content-Type': 'application/json',
+        },
         method: 'POST',
       });
-      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(typeof data?.message === 'string' ? data.message : 'Chatbot AI chưa thể phản hồi.');
       }
-      setMessages((prev) => [...prev, {
-        content: String(data.message ?? 'Tôi chưa có câu trả lời phù hợp.'),
-        id: createId(),
-        role: 'assistant',
-        suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
-      }]);
+
+      if ((response.headers.get('content-type') || '').includes('text/event-stream')) {
+        await readAiChatStream(response, {
+          onDelta: (text) => {
+            setMessages((prev) => prev.map((item) =>
+              item.id === assistantId ? { ...item, content: `${item.content}${text}` } : item
+            ));
+          },
+          onError: (errorMessage) => patchAssistant({ content: errorMessage }),
+          onMeta: (suggestions) => patchAssistant({ suggestions }),
+        });
+      } else {
+        const data = await response.json().catch(() => ({}));
+        patchAssistant({
+          content: String(data.message ?? 'Tôi chưa có câu trả lời phù hợp.'),
+          suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
+        });
+      }
     } catch (error) {
-      setMessages((prev) => [...prev, {
+      patchAssistant({
         content: error instanceof Error ? error.message : 'Chatbot AI chưa thể phản hồi.',
-        id: createId(),
-        role: 'assistant',
-      }]);
+        suggestions: [],
+      });
     } finally {
       setIsSending(false);
     }
@@ -124,46 +227,55 @@ export function AiChatbotWidget() {
   }
 
   return (
-    <div className="fixed bottom-24 right-3 z-[70] w-[calc(100vw-24px)] max-w-[390px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-cyan-600 to-blue-600 px-4 py-3 text-white dark:border-slate-800">
+    <div
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="ai-chatbot-title"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] right-2 z-[70] flex h-[min(70dvh,500px)] max-h-[calc(100dvh-7.25rem)] w-[calc(100vw-16px)] max-w-[420px] flex-col overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-950 sm:right-4"
+    >
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2.5 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-            <Bot size={19} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-cyan-700 dark:border-slate-800 dark:bg-slate-900 dark:text-cyan-300">
+            <Bot size={17} />
           </span>
           <div>
-            <p className="text-sm font-bold">{config.widgetTitle}</p>
-            <p className="text-[11px] text-white/75">{providerLabel} • phản hồi theo dữ liệu site</p>
+            <p id="ai-chatbot-title" className="text-sm font-bold">{config.widgetTitle}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{providerLabel} • dữ liệu site</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
+          className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100"
           aria-label="Đóng chatbot"
         >
           <X size={18} />
         </button>
       </div>
 
-      <div className="max-h-[420px] min-h-[330px] space-y-3 overflow-y-auto bg-slate-50 px-3 py-4 dark:bg-slate-950">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-white px-3 py-3 dark:bg-slate-950" aria-live="polite">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+            <div className={`min-w-0 max-w-[90%] overflow-hidden rounded-md px-2.5 py-2 text-[13px] leading-5 break-words [overflow-wrap:anywhere] ${
               message.role === 'user'
-                ? 'bg-cyan-600 text-white'
-                : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200'
+                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950'
+                : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200'
             }`}>
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              {message.role === 'assistant' ? (
+                <SafeMarkdown className="text-[13px]" content={message.content} emptyText="Đang trả lời..." />
+              ) : (
+                <div className="whitespace-pre-wrap">{message.content}</div>
+              )}
               {message.suggestions && message.suggestions.length > 0 && (
-                <div className="mt-3 space-y-1.5">
+                <div className="mt-2 space-y-1.5">
                   {message.suggestions.slice(0, 4).map((suggestion) => (
                     <a
                       key={`${suggestion.type}:${suggestion.url}`}
                       href={suggestion.url}
-                      className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-medium text-cyan-700 transition hover:bg-cyan-50 dark:border-slate-700 dark:text-cyan-300 dark:hover:bg-cyan-950/30"
+                      className="flex items-start justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 transition hover:border-cyan-200 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-cyan-900 dark:hover:text-cyan-300"
                     >
-                      <span className="truncate">{suggestion.title}</span>
-                      <ExternalLink size={12} className="shrink-0" />
+                      <span className="min-w-0 flex-1 break-words leading-4">{suggestion.title}</span>
+                      <ExternalLink size={12} className="mt-0.5 shrink-0" />
                     </a>
                   ))}
                 </div>
@@ -174,25 +286,25 @@ export function AiChatbotWidget() {
 
         {isSending && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-[13px] text-slate-500 dark:border-slate-800 dark:bg-slate-900">
               <Loader2 size={14} className="animate-spin" />
               Đang suy nghĩ...
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
-        <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
+      <div className="border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+        <div className="mb-2 flex flex-wrap gap-1.5">
           {quickQuestions.map((question) => (
             <button
               key={question}
               type="button"
               onClick={() => sendMessage(question)}
               disabled={isSending}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100 disabled:opacity-60 dark:border-cyan-900/50 dark:bg-cyan-950/30 dark:text-cyan-300"
+              className="inline-flex shrink-0 items-center rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-cyan-200 hover:text-cyan-700 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-cyan-900 dark:hover:text-cyan-300"
             >
-              <Sparkles size={11} />
               {question}
             </button>
           ))}
@@ -208,12 +320,13 @@ export function AiChatbotWidget() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Nhập câu hỏi..."
-            className="min-h-11 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/10 dark:border-slate-800 dark:bg-slate-900"
+            aria-label="Nhập câu hỏi cho chatbot"
+            className="min-h-11 flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/10 dark:border-slate-800 dark:bg-slate-900"
           />
           <button
             type="submit"
             disabled={isSending || !input.trim()}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-600 text-white shadow-md transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-900 text-white transition hover:bg-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-cyan-300"
             aria-label="Gửi"
           >
             {isSending ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
